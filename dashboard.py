@@ -12,3 +12,4 @@ console.print(
 
 console.print("Status: System initialized")
 console.print("Cloud topology: Loading...")
+console.print("Resources: Internet | Subnet | Database")
