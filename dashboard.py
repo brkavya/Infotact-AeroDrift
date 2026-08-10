@@ -1,5 +1,6 @@
 from rich.console import Console
 from rich.panel import Panel
+from rich.tree import Tree
 
 console = Console()
 
@@ -13,3 +14,11 @@ console.print(
 console.print("Status: System initialized")
 console.print("Cloud topology: Loading...")
 console.print("Resources: Internet | Subnet | Database")
+topology = Tree("Cloud Topology")
+
+internet = topology.add("Internet")
+subnet = internet.add("Public Subnet")
+server = subnet.add("Application Server")
+server.add("Private Database")
+
+console.print(topology)
