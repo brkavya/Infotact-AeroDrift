@@ -25,3 +25,7 @@ server.add("Private Database")
 
 console.print(topology)
 console.print("Status: All resources available")
+console.print("Internet: Online")
+console.print("Public Subnet: Active")
+console.print("Application Server: Running")
+console.print("Private Database: Connected")
