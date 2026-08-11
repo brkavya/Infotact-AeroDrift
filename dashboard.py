@@ -15,6 +15,8 @@ console.print("Status: System initialized")
 console.print("Cloud topology: Loading...")
 console.print("Resources: Internet | Subnet | Database")
 topology = Tree("Cloud Topology")
+console.print("Resources: Internet | Subnet | Database")
+
 
 internet = topology.add("Internet")
 subnet = internet.add("Public Subnet")
@@ -22,3 +24,4 @@ server = subnet.add("Application Server")
 server.add("Private Database")
 
 console.print(topology)
+console.print("Status: All resources available")
