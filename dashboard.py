@@ -44,3 +44,10 @@ console.print("Internet: Online")
 console.print("Public Subnet: Active")
 console.print("Application Server: Running")
 console.print("Private Database: Connected")
+
+console.print("\n[bold cyan]Resource Status[/bold cyan]")
+
+console.print("[green]✓ Internet: Online[/green]")
+console.print("[green]✓ Public Subnet: Active[/green]")
+console.print("[green]✓ Application Server: Running[/green]")
+console.print("[green]✓ Private Database: Connected[/green]")
