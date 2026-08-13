@@ -11,6 +11,16 @@ console.print(
     )
 )
 
+topology = Tree("☁ Cloud Topology")
+
+internet = topology.add("🌐 Internet")
+public_subnet = internet.add("📦 Public Subnet")
+application = public_subnet.add("🖥 Application Server")
+application.add("🗄 Private Database")
+
+console.print(topology)
+
+
 from rich.console import Console
 from rich.tree import Tree
 
