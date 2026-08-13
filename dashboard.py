@@ -1,31 +1,95 @@
 from rich.console import Console
-from rich.panel import Panel
 from rich.tree import Tree
+from rich.panel import Panel
+from rich.table import Table
 
 console = Console()
 
+# -----------------------------
+# AeroDrift Dashboard Header
+# -----------------------------
 console.print(
     Panel(
-        "AeroDrift Cloud Security Dashboard",
-        title="AeroDrift"
+        "[bold cyan]AeroDrift Cloud Security Dashboard[/bold cyan]\n"
+        "[white]CloudOps & Graph Security Monitoring[/white]",
+        title="AeroDrift",
+        border_style="cyan"
     )
 )
 
-console.print("Status: System initialized")
-console.print("Cloud topology: Loading...")
-console.print("Resources: Internet | Subnet | Database")
-topology = Tree("Cloud Topology")
-console.print("Resources: Internet | Subnet | Database")
+# -----------------------------
+# Cloud Topology
+# -----------------------------
+topology = Tree("[bold cyan]☁ Cloud Topology[/bold cyan]")
 
-
-internet = topology.add("Internet")
-subnet = internet.add("Public Subnet")
-server = subnet.add("Application Server")
-server.add("Private Database")
+internet = topology.add("[bold green]🌐 Internet[/bold green]")
+public_subnet = internet.add("[yellow]▣ Public Subnet[/yellow]")
+application = public_subnet.add("[blue]▣ Application Server[/blue]")
+application.add("[green]▣ Private Database[/green]")
 
 console.print(topology)
-console.print("Status: All resources available")
-console.print("Internet: Online")
-console.print("Public Subnet: Active")
-console.print("Application Server: Running")
-console.print("Private Database: Connected")
+
+# -----------------------------
+# Resource Health Status
+# -----------------------------
+console.print()
+
+table = Table(
+    title="Resource Health Status",
+    show_header=True,
+    header_style="bold cyan"
+)
+
+table.add_column("Resource", style="bold")
+table.add_column("Status")
+table.add_column("Health")
+
+table.add_row(
+    "Internet",
+    "[green]Online[/green]",
+    "[green]✓ Healthy[/green]"
+)
+
+table.add_row(
+    "Public Subnet",
+    "[green]Active[/green]",
+    "[green]✓ Healthy[/green]"
+)
+
+table.add_row(
+    "Application Server",
+    "[green]Running[/green]",
+    "[green]✓ Healthy[/green]"
+)
+
+table.add_row(
+    "Private Database",
+    "[green]Connected[/green]",
+    "[green]✓ Healthy[/green]"
+)
+
+console.print(table)
+
+# -----------------------------
+# System Summary
+# -----------------------------
+console.print()
+
+console.print(
+    Panel(
+        "[green]✓ All resources are available[/green]\n"
+        "[green]✓ Cloud topology loaded successfully[/green]\n"
+        "[green]✓ Security dashboard initialized[/green]",
+        title="System Status",
+        border_style="green"
+    )
+)
+console.print(
+    Panel(
+        "[bold green]AeroDrift monitoring is active[/bold green]\n"
+        "[green]✓ Topology monitoring enabled[/green]\n"
+        "[green]✓ Resource health monitoring enabled[/green]",
+        title="Monitoring",
+        border_style="green"
+    )
+)
