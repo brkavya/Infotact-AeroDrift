@@ -84,3 +84,12 @@ console.print(
         border_style="green"
     )
 )
+console.print(
+    Panel(
+        "[bold green]AeroDrift monitoring is active[/bold green]\n"
+        "[green]✓ Topology monitoring enabled[/green]\n"
+        "[green]✓ Resource health monitoring enabled[/green]",
+        title="Monitoring",
+        border_style="green"
+    )
+)
