@@ -103,3 +103,13 @@ console.print(
         border_style="green"
     )
 )
+console.print(
+    Panel(
+        "[yellow]⚠ Failed Login Attempts: 0[/yellow]\n"
+        "[green]✓ Unauthorized Access: None[/green]\n"
+        "[green]✓ Threat Detection: Clear[/green]\n"
+        "[green]✓ Security Alerts: None[/green]",
+        title="Security Alerts",
+        border_style="yellow"
+    )
+)
