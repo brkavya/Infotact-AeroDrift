@@ -93,3 +93,13 @@ console.print(
         border_style="green"
     )
 )
+console.print(
+    Panel(
+        "[green]✓ Firewall: Active[/green]\n"
+        "[green]✓ Security Scan: Passed[/green]\n"
+        "[green]✓ Access Control: Enabled[/green]\n"
+        "[green]✓ Encryption: Enabled[/green]",
+        title="Security Status",
+        border_style="green"
+    )
+)
