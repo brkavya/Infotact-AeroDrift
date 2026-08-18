@@ -140,7 +140,20 @@ summary.add_row(
     "[yellow]⚠ None[/yellow]"
 )
 
+
 console.print(summary)
+
+
+
+def get_health_status(status):
+    if status == "Healthy":
+        return "[green]✓ Healthy[/green]"
+    elif status == "Drifted":
+        return "[red]⚠ Drifted[/red]"
+    else:
+       return "[yellow]⚠ Warning[/yellow]"
+
+
 
 
 # =========================================================
@@ -154,42 +167,38 @@ table = Table(
     show_header=True,
     header_style="bold cyan"
 )
-
-table.add_column("Resource", style="bold")
-table.add_column("Status")
-table.add_column("Health")
-
 table.add_row(
     "Internet",
     "[green]Online[/green]",
-    "[green]✓ Healthy[/green]"
+    get_health_status("Healthy")
 )
 
 table.add_row(
     "VPC",
     "[green]Active[/green]",
-    "[green]✓ Healthy[/green]"
+    get_health_status("Healthy")
 )
 
 table.add_row(
     "Subnet",
     "[green]Active[/green]",
-    "[green]✓ Healthy[/green]"
+    get_health_status("Healthy")
 )
 
 table.add_row(
     "EC2",
     "[green]Running[/green]",
-    "[green]✓ Healthy[/green]"
+    get_health_status("Drifted")
 )
 
 table.add_row(
     "Database",
     "[green]Connected[/green]",
-    "[green]✓ Healthy[/green]"
+    get_health_status("Healthy")
 )
 
 console.print(table)
+
 
 
 # =========================================================
