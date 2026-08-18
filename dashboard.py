@@ -160,6 +160,10 @@ def get_health_status(status):
 # Resource Health Status
 # =========================================================
 
+# =========================================================
+# Resource Health Status
+# =========================================================
+
 console.print()
 
 table = Table(
@@ -167,38 +171,29 @@ table = Table(
     show_header=True,
     header_style="bold cyan"
 )
-table.add_row(
-    "Internet",
-    "[green]Online[/green]",
-    get_health_status("Healthy")
-)
 
-table.add_row(
-    "VPC",
-    "[green]Active[/green]",
-    get_health_status("Healthy")
-)
+table.add_column("Resource", style="bold")
+table.add_column("Status")
+table.add_column("Health")
 
-table.add_row(
-    "Subnet",
-    "[green]Active[/green]",
-    get_health_status("Healthy")
-)
+# Resource status data
+resource_status = {
+    "Internet": ("Online", "Healthy"),
+    "VPC": ("Active", "Healthy"),
+    "Subnet": ("Active", "Healthy"),
+    "EC2": ("Running", "Drifted"),
+    "Database": ("Connected", "Healthy")
+}
 
-table.add_row(
-    "EC2",
-    "[green]Running[/green]",
-    get_health_status("Drifted")
-)
-
-table.add_row(
-    "Database",
-    "[green]Connected[/green]",
-    get_health_status("Healthy")
-)
+# Add resources to health table
+for resource, (status, health) in resource_status.items():
+    table.add_row(
+        resource,
+        status,
+        get_health_status(health)
+    )
 
 console.print(table)
-
 
 
 # =========================================================
