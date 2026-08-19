@@ -218,6 +218,24 @@ console.print(
         border_style="cyan"
     )
 )
+# =========================================================
+# Health Assessment
+# =========================================================
+
+if health_percentage == 100:
+    health_message = "[green]✓ All resources are healthy[/green]"
+elif health_percentage >= 80:
+    health_message = "[yellow]⚠ System health is good with minor issues[/yellow]"
+else:
+    health_message = "[red]⚠ System requires attention[/red]"
+
+console.print(
+    Panel(
+        health_message,
+        title="Health Assessment",
+        border_style="cyan"
+    )
+)
 
 # =========================================================
 # System Summary
