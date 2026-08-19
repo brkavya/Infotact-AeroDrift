@@ -153,13 +153,6 @@ def get_health_status(status):
     else:
        return "[yellow]⚠ Warning[/yellow]"
 
-
-
-
-# =========================================================
-# Resource Health Status
-# =========================================================
-
 # =========================================================
 # Resource Health Status
 # =========================================================
@@ -213,7 +206,18 @@ console.print(
         border_style="cyan"
     )
 )
+# Health Percentage
+total_resources = len(resource_status)
 
+health_percentage = (healthy_count / total_resources) * 100
+
+console.print(
+    Panel(
+        f"[cyan]Health Score: {health_percentage:.0f}%[/cyan]",
+        title="Overall Health",
+        border_style="cyan"
+    )
+)
 
 # =========================================================
 # System Summary
