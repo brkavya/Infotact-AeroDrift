@@ -194,6 +194,25 @@ for resource, (status, health) in resource_status.items():
     )
 
 console.print(table)
+# Health Summary
+healthy_count = sum(
+    1 for status in resource_status.values()
+    if status[1] == "Healthy"
+)
+
+drifted_count = sum(
+    1 for status in resource_status.values()
+    if status[1] == "Drifted"
+)
+
+console.print(
+    Panel(
+        f"[green]✓ Healthy Resources: {healthy_count}[/green]\n"
+        f"[red]⚠ Drifted Resources: {drifted_count}[/red]",
+        title="Health Summary",
+        border_style="cyan"
+    )
+)
 
 
 # =========================================================
