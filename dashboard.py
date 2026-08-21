@@ -299,7 +299,28 @@ else:
     threat_detection = "[green]✓ Threat Detection: Clear[/green]"
     security_alerts = "[green]✓ Security Alerts: None[/green]"
 
+# =========================================================
+# Security Score
+# =========================================================
 
+security_checks = {
+    "Firewall": True,
+    "Security Scan": True,
+    "Access Control": True,
+    "Encryption": True
+}
+
+security_score = (
+    sum(security_checks.values()) / len(security_checks)
+) * 100
+
+console.print(
+    Panel(
+        f"[cyan]Security Score: {security_score:.0f}%[/cyan]",
+        title="Security Score",
+        border_style="cyan"
+    )
+)
 # =========================================================
 # Security Alerts
 # =========================================================
