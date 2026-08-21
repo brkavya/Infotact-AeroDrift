@@ -238,7 +238,85 @@ console.print(
         border_style="cyan"
     )
 )
+# =========================================================
+# Resource Details
+# =========================================================
 
+resource_details = {
+    "Internet": {
+        "Type": "Network",
+        "Status": "Online",
+        "Health": "Healthy",
+        "Risk": "Low"
+    },
+
+    "VPC": {
+        "Type": "Network",
+        "Status": "Active",
+        "Health": "Healthy",
+        "Risk": "Low"
+    },
+
+    "Subnet": {
+        "Type": "Network",
+        "Status": "Active",
+        "Health": "Healthy",
+        "Risk": "Low"
+    },
+
+    "EC2": {
+        "Type": "Compute",
+        "Status": "Running",
+        "Health": "Drifted",
+        "Risk": "High"
+    },
+
+    "Database": {
+        "Type": "Database",
+        "Status": "Connected",
+        "Health": "Healthy",
+        "Risk": "Low"
+    }
+}
+
+
+console.print()
+
+resource_table = Table(
+    title="Resource Details",
+    show_header=True,
+    header_style="bold cyan"
+)
+
+resource_table.add_column("Resource", style="bold")
+resource_table.add_column("Type")
+resource_table.add_column("Status")
+resource_table.add_column("Health")
+resource_table.add_column("Risk")
+
+
+for resource, details in resource_details.items():
+
+    if details["Health"] == "Healthy":
+        health = "[green]✓ Healthy[/green]"
+    else:
+        health = "[red]⚠ Drifted[/red]"
+
+    if details["Risk"] == "High":
+        risk = "[red]High[/red]"
+    else:
+        risk = "[green]Low[/green]"
+
+    resource_table.add_row(
+        resource,
+        details["Type"],
+        details["Status"],
+        health,
+        risk
+    )
+
+
+console.print(resource_table)
 # =========================================================
 # System Summary
 # =========================================================
