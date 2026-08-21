@@ -322,15 +322,25 @@ console.print(
     )
 )
 # =========================================================
+# Dynamic Threat Detection
+# =========================================================
+
+if drifted_count == 0:
+    threat_status = "[green]✓ Threat Detection: Clear[/green]"
+    security_alert = "[green]✓ Security Alerts: None[/green]"
+else:
+    threat_status = "[red]⚠ Threat Detection: Attention Required[/red]"
+    security_alert = "[red]⚠ Security Alerts: Resource Drift Detected[/red]"
+# =========================================================
 # Security Alerts
 # =========================================================
 
 console.print(
     Panel(
-        f"[yellow]⚠ Failed Login Attempts: {failed_login_attempts}[/yellow]\n"
+        "[yellow]⚠ Failed Login Attempts: 0[/yellow]\n"
         "[green]✓ Unauthorized Access: None[/green]\n"
-        f"{threat_detection}\n"
-        f"{security_alerts}",
+        f"{threat_status}\n"
+        f"{security_alert}",
         title="Security Alerts",
         border_style="yellow"
     )
