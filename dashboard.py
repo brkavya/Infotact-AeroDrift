@@ -410,6 +410,60 @@ else:
     threat_status = "[red]⚠ Threat Detection: Attention Required[/red]"
     security_alert = "[red]⚠ Security Alerts: Resource Drift Detected[/red]"
 # =========================================================
+# Resource Drift & Remediation
+# =========================================================
+
+drifted_resources = []
+
+for resource, (status, health) in resource_status.items():
+    if health == "Drifted":
+        drifted_resources.append(resource)
+
+# Remediation recommendations
+recommendations = {
+    "EC2": "Review EC2 configuration and restore expected settings.",
+    "VPC": "Check VPC configuration and security rules.",
+    "Subnet": "Verify subnet configuration and routing settings.",
+    "Database": "Check database connectivity and configuration.",
+    "Internet": "Verify network connectivity and access rules."
+}
+
+console.print()
+
+if drifted_resources:
+
+    remediation_text = ""
+
+    for resource in drifted_resources:
+        recommendation = recommendations.get(
+            resource,
+            "Review resource configuration."
+        )
+
+        remediation_text += (
+            f"[red]⚠ {resource}: Drift Detected[/red]\n"
+            f"[yellow]→ Recommendation: {recommendation}[/yellow]\n"
+        )
+
+    console.print(
+        Panel(
+            remediation_text,
+            title="Drift Detection & Remediation",
+            border_style="red"
+        )
+    )
+
+else:
+
+    console.print(
+        Panel(
+            "[green]✓ No resource drift detected[/green]\n"
+            "[green]✓ All resources match expected configuration[/green]",
+            title="Drift Detection & Remediation",
+            border_style="green"
+        )
+    )
+# =========================================================
 # Security Alerts
 # =========================================================
 
