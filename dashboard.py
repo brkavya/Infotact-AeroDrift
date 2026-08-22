@@ -464,6 +464,46 @@ else:
         )
     )
 # =========================================================
+# Dynamic Remediation Status
+# =========================================================
+
+drift_count = len(drifted_resources)
+
+if drift_count == 0:
+
+    remediation_status = "[green]✓ No remediation required[/green]"
+    remediation_message = (
+        "[green]All resources are properly configured.[/green]"
+    )
+    remediation_border = "green"
+
+elif drift_count == 1:
+
+    remediation_status = "[yellow]⚠ Remediation Required[/yellow]"
+    remediation_message = (
+        f"[yellow]{drift_count} resource requires attention.[/yellow]"
+    )
+    remediation_border = "yellow"
+
+else:
+
+    remediation_status = "[red]⚠ Immediate Remediation Required[/red]"
+    remediation_message = (
+        f"[red]{drift_count} resources require attention.[/red]"
+    )
+    remediation_border = "red"
+
+console.print()
+
+console.print(
+    Panel(
+        f"{remediation_status}\n"
+        f"{remediation_message}",
+        title="Remediation Status",
+        border_style=remediation_border
+    )
+)
+# =========================================================
 # Security Alerts
 # =========================================================
 
