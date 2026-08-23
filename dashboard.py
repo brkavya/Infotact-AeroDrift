@@ -6,6 +6,8 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.tree import Tree
 
+from src.resource_manager import ResourceManager
+from src.health_check import HealthChecker
 # Path configuration for backend modules
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "src")))
 
@@ -13,6 +15,21 @@ from health_check import HealthChecker
 from resource_manager import ResourceManager
 
 console = Console()
+# =========================================================
+# Backend Integration
+# =========================================================
+
+manager = ResourceManager()
+checker = HealthChecker()
+manager.add_resource("Web-Server", "EC2", "running")
+manager.add_resource("Database", "RDS", "available")
+resources = manager.list_resources()
+
+health_records = []
+
+for resource in resources:
+    record = checker.check_status(resource)
+    health_records.append(record)
 
 # =========================================================
 # AeroDrift Dashboard Header
