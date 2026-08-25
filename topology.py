@@ -28,6 +28,25 @@ def add_inventory_resources(graph, resource_manager):
             source="ResourceManager"
         )
 
+
+    return graph
+
+def add_resource_relationships(graph):
+    """Add relationships between cloud resources."""
+
+    relationships = [
+        ("Internet", "Web-Server"),
+        ("Web-Server", "Database"),
+    ]
+
+    for source, target in relationships:
+        if source in graph.nodes and target in graph.nodes:
+            graph.add_edge(
+                source,
+                target,
+                relationship="connects"
+            )
+
     return graph
 
 if __name__ == "__main__":

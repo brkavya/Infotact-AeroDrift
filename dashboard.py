@@ -7,7 +7,11 @@ from rich.tree import Tree
 
 from src.resource_manager import ResourceManager
 from src.health_check import HealthChecker
-from topology import initialize_cloud_topology, add_inventory_resources
+from topology import (
+    initialize_cloud_topology,
+    add_inventory_resources,
+    add_resource_relationships
+)
 
 
 
@@ -45,8 +49,8 @@ console.print(
 # =========================================================
 topology = initialize_cloud_topology()
 
-# Add resources from ResourceManager into the topology
 add_inventory_resources(topology, manager)
+add_resource_relationships(topology)
 
 # =========================================================
 # Rich Cloud Topology Visualization
