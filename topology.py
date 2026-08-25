@@ -17,6 +17,18 @@ def audit_security_drift(graph):
     except nx.NetworkXNoPath:
         print("[✓] Cloud network is secure. No direct path from Internet to Database.")
         return False
+def add_inventory_resources(graph, resource_manager):
+    """Add ResourceManager inventory as nodes to the cloud graph."""
+
+    for resource in resource_manager.list_resources():
+        graph.add_node(
+            resource["name"],
+            resource_type=resource["type"],
+            status=resource["status"],
+            source="ResourceManager"
+        )
+
+    return graph
 
 if __name__ == "__main__":
     print("Initializing AeroDrift Cloud Topology Engine...")
