@@ -112,6 +112,50 @@ topology_table.add_row(
     "Edges List",
     ", ".join(f"{source} → {target}" for source, target in topology.edges)
 )
+# =========================================================
+# Topology Validation
+# =========================================================
+
+required_nodes = {
+    "Internet",
+    "Public_Subnet",
+    "Private_Database",
+    "Web-Server",
+    "Database"
+}
+
+required_edges = {
+    ("Internet", "Public_Subnet"),
+    ("Public_Subnet", "Private_Database"),
+    ("Internet", "Web-Server"),
+    ("Web-Server", "Database")
+}
+
+missing_nodes = required_nodes - set(topology.nodes)
+missing_edges = required_edges - set(topology.edges)
+
+if not missing_nodes and not missing_edges:
+    topology_status = (
+        "[green]✓ Topology validation passed[/green]\n"
+        "[green]✓ All required resources are present[/green]\n"
+        "[green]✓ All required relationships are present[/green]"
+    )
+    topology_border = "green"
+else:
+    topology_status = (
+        "[red]⚠ Topology validation failed[/red]\n"
+        f"[red]Missing Nodes: {missing_nodes}[/red]\n"
+        f"[red]Missing Edges: {missing_edges}[/red]"
+    )
+    topology_border = "red"
+
+console.print(
+    Panel(
+        topology_status,
+        title="Topology Validation",
+        border_style=topology_border
+    )
+)
 console.print(topology_table)
 
 # =========================================================
