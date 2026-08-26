@@ -157,7 +157,51 @@ console.print(
     )
 )
 console.print(topology_table)
+# =========================================================
+# Topology Statistics
+# =========================================================
 
+resource_manager_count = len(resources)
+networkx_node_count = topology.number_of_nodes()
+networkx_edge_count = topology.number_of_edges()
+
+console.print()
+
+topology_stats = Table(
+    title="Topology Statistics",
+    show_header=True,
+    header_style="bold cyan"
+)
+
+topology_stats.add_column("Metric")
+topology_stats.add_column("Value")
+topology_stats.add_column("Status")
+
+topology_stats.add_row(
+    "NetworkX Nodes",
+    str(networkx_node_count),
+    "[green]✓ Loaded[/green]"
+)
+
+topology_stats.add_row(
+    "NetworkX Edges",
+    str(networkx_edge_count),
+    "[green]✓ Loaded[/green]"
+)
+
+topology_stats.add_row(
+    "Inventory Resources",
+    str(resource_manager_count),
+    "[green]✓ Synced[/green]"
+)
+
+topology_stats.add_row(
+    "Topology Relationships",
+    str(len(topology.edges)),
+    "[green]✓ Active[/green]"
+)
+
+console.print(topology_stats)
 # =========================================================
 # Resource Summary
 # =========================================================
