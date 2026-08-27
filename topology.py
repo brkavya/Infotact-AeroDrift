@@ -1,26 +1,70 @@
 import networkx as nx
 
+from src.aws_loader import AWSLoader
+
+
 def initialize_cloud_topology():
+    """Create the NetworkX cloud topology from AWSLoader data."""
+
     cloud_graph = nx.DiGraph()
-    cloud_graph.add_node("Internet", resource_type="Gateway", exposed_to_public=True)
-    cloud_graph.add_node("Public_Subnet", resource_type="Subnet", exposed_to_public=True)
-    cloud_graph.add_node("Private_Database", resource_type="Database", exposed_to_public=False)
-    cloud_graph.add_edge("Internet", "Public_Subnet", port=443, open=True)
-    cloud_graph.add_edge("Public_Subnet", "Private_Database", port=22, open=True)
+
+    loader = AWSLoader()
+    resources = loader.load_resources()
+
+    # Add AWS resources as nodes
+    for resource in resources:
+        cloud_graph.add_node(
+            resource["id"],
+            resource_type=resource["type"],
+            metadata=resource["metadata"],
+            region=resource["region"]
+        )
+
+    # Add relationships as edges
+    for resource in resources:
+        for rel in resource.get("relationships", []):
+            target = rel["target"]
+
+            cloud_graph.add_edge(
+                resource["id"],
+                target,
+                relation=rel["type"]
+            )
+
     return cloud_graph
 
+
 def audit_security_drift(graph):
+    """Check whether a path exists from Internet to the database."""
+
     try:
-        path = nx.shortest_path(graph, source="Internet", target="Private_Database")
-        print(f"[!] SECURITY DRIFT DETECTED: Path found from Internet to Database -> {path}")
+        path = nx.shortest_path(
+            graph,
+            source="Internet",
+            target="Private_Database"
+        )
+
+        print(
+            f"[!] SECURITY DRIFT DETECTED: "
+            f"Path found from Internet to Database -> {path}"
+        )
+
         return True
-    except nx.NetworkXNoPath:
-        print("[✓] Cloud network is secure. No direct path from Internet to Database.")
+
+    except (nx.NetworkXNoPath, nx.NodeNotFound):
+        print(
+            "[✓] Cloud network is secure. "
+            "No direct path from Internet to Database."
+        )
+
         return False
+
+
 def add_inventory_resources(graph, resource_manager):
     """Add ResourceManager inventory as nodes to the cloud graph."""
 
     for resource in resource_manager.list_resources():
+
         graph.add_node(
             resource["name"],
             resource_type=resource["type"],
@@ -28,8 +72,8 @@ def add_inventory_resources(graph, resource_manager):
             source="ResourceManager"
         )
 
-
     return graph
+
 
 def add_resource_relationships(graph):
     """Add relationships between cloud resources."""
@@ -40,7 +84,9 @@ def add_resource_relationships(graph):
     ]
 
     for source, target in relationships:
+
         if source in graph.nodes and target in graph.nodes:
+
             graph.add_edge(
                 source,
                 target,
@@ -49,9 +95,23 @@ def add_resource_relationships(graph):
 
     return graph
 
+
 if __name__ == "__main__":
+
     print("Initializing AeroDrift Cloud Topology Engine...")
+
     network_graph = initialize_cloud_topology()
-    print(f"Total Resources (Nodes): {list(network_graph.nodes)}")
-    print(f"Network Pathways (Edges): {list(network_graph.edges)}")
+
+    print("\nAWS Resources / Nodes:")
+    for node, data in network_graph.nodes(data=True):
+        print(node, data)
+
+    print("\nResource Relationships / Edges:")
+    for source, target, data in network_graph.edges(data=True):
+        print(source, "->", target, data)
+
+    print("\nTopology Statistics:")
+    print("Total Nodes:", network_graph.number_of_nodes())
+    print("Total Edges:", network_graph.number_of_edges())
+
     audit_security_drift(network_graph)
