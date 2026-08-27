@@ -28,6 +28,23 @@ class TestAWSLoader(unittest.TestCase):
         self.assertIn("subnet-aabbccdd", targets)
         self.assertIn("sg-1", targets)
         self.assertIn("sg-2", targets)
+    def test_ec2_relationship_types(self):
+        raw_ec2 = {
+            "id": "i-test-01",
+            "vpc_id": "vpc-test",
+            "subnet_id": "subnet-test",
+            "security_groups": ["sg-test"]
+        }
+
+        normalized = self.loader.normalize_resource(raw_ec2, "EC2")
+
+        relationship_types = [
+            rel["type"] for rel in normalized["relationships"]
+        ]
+
+        self.assertIn("CONTAINED_IN", relationship_types)
+        self.assertIn("LOCATED_IN", relationship_types)
+        self.assertIn("ATTACHED_TO", relationship_types)
 
     def test_load_resources_returns_normalized_list(self):
         resources = self.loader.load_resources()
