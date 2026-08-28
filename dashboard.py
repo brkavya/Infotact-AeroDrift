@@ -1,18 +1,36 @@
-import os
-import sys
 import networkx as nx
+
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 from rich.tree import Tree
 
-# Path configuration for backend modules
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "src")))
+from src.resource_manager import ResourceManager
+from src.health_check import HealthChecker
+from topology import (
+    initialize_cloud_topology,
+    add_inventory_resources,
+    add_resource_relationships
+)
 
-from health_check import HealthChecker
-from resource_manager import ResourceManager
+
 
 console = Console()
+# =========================================================
+# Backend Integration
+# =========================================================
+
+manager = ResourceManager()
+checker = HealthChecker()
+manager.add_resource("Web-Server", "EC2", "running")
+manager.add_resource("Database", "RDS", "available")
+resources = manager.list_resources()
+
+health_records = []
+
+for resource in resources:
+    record = checker.check_status(resource)
+    health_records.append(record)
 
 # =========================================================
 # AeroDrift Dashboard Header
@@ -29,24 +47,39 @@ console.print(
 # =========================================================
 # NetworkX Cloud Topology
 # =========================================================
-topology = nx.DiGraph()
-topology.add_nodes_from(["Internet", "VPC", "Subnet", "EC2", "Database"])
-topology.add_edges_from([
-    ("Internet", "VPC"),
-    ("VPC", "Subnet"),
-    ("Subnet", "EC2"),
-    ("EC2", "Database"),
-])
+topology = initialize_cloud_topology()
+
+add_inventory_resources(topology, manager)
+add_resource_relationships(topology)
 
 # =========================================================
 # Rich Cloud Topology Visualization
 # =========================================================
 tree = Tree("[bold cyan]☁ Cloud Topology[/bold cyan]")
-internet = tree.add("[bold green]🌐 Internet[/bold green]")
-vpc = internet.add("[cyan]☁ VPC[/cyan]")
-subnet = vpc.add("[yellow]▣ Subnet[/yellow]")
-ec2 = subnet.add("[blue]🖥 EC2[/blue]")
-ec2.add("[green]🗄 Database[/green]")
+
+for node in topology.nodes:
+    node_data = topology.nodes[node]
+    resource_type = node_data.get("resource_type", "Resource")
+
+    branch = tree.add(
+        f"[bold green]{node}[/bold green] "
+        f"[dim]({resource_type})[/dim]"
+    )
+
+    for target in topology.successors(node):
+        edge_data = topology.get_edge_data(node, target)
+        port = edge_data.get("port")
+
+        if port:
+            branch.add(
+                f"[yellow]→ {target}[/yellow] "
+                f"[dim](port {port})[/dim]"
+            )
+        else:
+            branch.add(
+                f"[yellow]→ {target}[/yellow]"
+            )
+
 console.print(tree)
 
 # =========================================================
@@ -60,11 +93,115 @@ topology_table = Table(
 )
 topology_table.add_column("Type")
 topology_table.add_column("Details")
-topology_table.add_row("Nodes", str(topology.number_of_nodes()))
-topology_table.add_row("Edges", str(topology.number_of_edges()))
-topology_table.add_row("Path", "Internet → VPC → Subnet → EC2 → Database")
-console.print(topology_table)
+topology_table.add_row(
+    "Nodes",
+    str(topology.number_of_nodes())
+)
 
+topology_table.add_row(
+    "Edges",
+    str(topology.number_of_edges())
+)
+
+topology_table.add_row(
+    "Nodes List",
+    ", ".join(topology.nodes)
+)
+
+topology_table.add_row(
+    "Edges List",
+    ", ".join(f"{source} → {target}" for source, target in topology.edges)
+)
+# =========================================================
+# Topology Validation
+# =========================================================
+
+required_nodes = {
+    "Internet",
+    "Public_Subnet",
+    "Private_Database",
+    "Web-Server",
+    "Database"
+}
+
+required_edges = {
+    ("Internet", "Public_Subnet"),
+    ("Public_Subnet", "Private_Database"),
+    ("Internet", "Web-Server"),
+    ("Web-Server", "Database")
+}
+
+missing_nodes = required_nodes - set(topology.nodes)
+missing_edges = required_edges - set(topology.edges)
+
+if not missing_nodes and not missing_edges:
+    topology_status = (
+        "[green]✓ Topology validation passed[/green]\n"
+        "[green]✓ All required resources are present[/green]\n"
+        "[green]✓ All required relationships are present[/green]"
+    )
+    topology_border = "green"
+else:
+    topology_status = (
+        "[red]⚠ Topology validation failed[/red]\n"
+        f"[red]Missing Nodes: {missing_nodes}[/red]\n"
+        f"[red]Missing Edges: {missing_edges}[/red]"
+    )
+    topology_border = "red"
+
+console.print(
+    Panel(
+        topology_status,
+        title="Topology Validation",
+        border_style=topology_border
+    )
+)
+console.print(topology_table)
+# =========================================================
+# Topology Statistics
+# =========================================================
+
+resource_manager_count = len(resources)
+networkx_node_count = topology.number_of_nodes()
+networkx_edge_count = topology.number_of_edges()
+
+console.print()
+
+topology_stats = Table(
+    title="Topology Statistics",
+    show_header=True,
+    header_style="bold cyan"
+)
+
+topology_stats.add_column("Metric")
+topology_stats.add_column("Value")
+topology_stats.add_column("Status")
+
+topology_stats.add_row(
+    "NetworkX Nodes",
+    str(networkx_node_count),
+    "[green]✓ Loaded[/green]"
+)
+
+topology_stats.add_row(
+    "NetworkX Edges",
+    str(networkx_edge_count),
+    "[green]✓ Loaded[/green]"
+)
+
+topology_stats.add_row(
+    "Inventory Resources",
+    str(resource_manager_count),
+    "[green]✓ Synced[/green]"
+)
+
+topology_stats.add_row(
+    "Topology Relationships",
+    str(len(topology.edges)),
+    "[green]✓ Active[/green]"
+)
+
+console.print(topology_stats)
 # =========================================================
 # Resource Summary
 # =========================================================
