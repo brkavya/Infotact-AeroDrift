@@ -29,7 +29,14 @@ class TestCloudTopology(unittest.TestCase):
     def test_topology_statistics(self):
         self.assertEqual(self.graph.number_of_nodes(), 6)
         self.assertEqual(self.graph.number_of_edges(), 5)
+    def test_relationship_attributes(self):
+        edge_data = self.graph.get_edge_data(
+            "i-web-01",
+            "vpc-01"
+        )
 
+        self.assertIsNotNone(edge_data)
+        self.assertEqual(edge_data["relation"], "CONTAINED_IN")
 
 if __name__ == "__main__":
     unittest.main()
