@@ -37,6 +37,14 @@ class TestCloudTopology(unittest.TestCase):
 
         self.assertIsNotNone(edge_data)
         self.assertEqual(edge_data["relation"], "CONTAINED_IN")
+    def test_resource_edge_attributes(self):
+        edge_data = self.graph.get_edge_data(
+            "i-web-01",
+            "vpc-01"
+        )
+
+        self.assertIsNotNone(edge_data)
+        self.assertEqual(edge_data["relation"], "CONTAINED_IN")
 
 if __name__ == "__main__":
     unittest.main()
