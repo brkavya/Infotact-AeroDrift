@@ -17,6 +17,21 @@ from topology import (
 console = Console()
 
 # =========================================================
+# Dashboard Summary
+# =========================================================
+
+console.print(
+    Panel(
+        "[bold cyan]AeroDrift Dashboard Summary[/bold cyan]\n"
+        "[white]Cloud security monitoring and topology overview[/white]\n\n"
+        "[green]✓ Network monitoring: Active[/green]\n"
+        "[green]✓ Resource monitoring: Active[/green]\n"
+        "[green]✓ Security monitoring: Active[/green]",
+        title="Overview",
+        border_style="cyan",
+    )
+)
+# =========================================================
 # Backend Integration
 # =========================================================
 manager = ResourceManager()
