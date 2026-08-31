@@ -10,16 +10,15 @@ from src.health_check import HealthChecker
 from topology import (
     initialize_cloud_topology,
     add_inventory_resources,
-    add_resource_relationships
+    add_resource_relationships,
 )
 
 
-
 console = Console()
+
 # =========================================================
 # Backend Integration
 # =========================================================
-
 manager = ResourceManager()
 checker = HealthChecker()
 manager.add_resource("Web-Server", "EC2", "running")
@@ -27,7 +26,6 @@ manager.add_resource("Database", "RDS", "available")
 resources = manager.list_resources()
 
 health_records = []
-
 for resource in resources:
     record = checker.check_status(resource)
     health_records.append(record)
@@ -68,7 +66,7 @@ for node in topology.nodes:
 
     for target in topology.successors(node):
         edge_data = topology.get_edge_data(node, target)
-        port = edge_data.get("port")
+        port = edge_data.get("port") if edge_data else None
 
         if port:
             branch.add(
@@ -97,38 +95,37 @@ topology_table.add_row(
     "Nodes",
     str(topology.number_of_nodes())
 )
-
 topology_table.add_row(
     "Edges",
     str(topology.number_of_edges())
 )
-
 topology_table.add_row(
     "Nodes List",
     ", ".join(topology.nodes)
 )
-
 topology_table.add_row(
     "Edges List",
     ", ".join(f"{source} → {target}" for source, target in topology.edges)
 )
+
 # =========================================================
 # Topology Validation
 # =========================================================
-
 required_nodes = {
-    "Internet",
-    "Public_Subnet",
-    "Private_Database",
-    "Web-Server",
-    "Database"
+    "i-web-01",
+    "db-prod-01",
+    "vpc-01",
+    "subnet-01",
+    "sg-web",
+    "dbsubnet-01",
 }
 
 required_edges = {
-    ("Internet", "Public_Subnet"),
-    ("Public_Subnet", "Private_Database"),
-    ("Internet", "Web-Server"),
-    ("Web-Server", "Database")
+    ("i-web-01", "vpc-01"),
+    ("i-web-01", "subnet-01"),
+    ("i-web-01", "sg-web"),
+    ("db-prod-01", "vpc-01"),
+    ("db-prod-01", "dbsubnet-01"),
 }
 
 missing_nodes = required_nodes - set(topology.nodes)
@@ -153,14 +150,14 @@ console.print(
     Panel(
         topology_status,
         title="Topology Validation",
-        border_style=topology_border
+        border_style=topology_border,
     )
 )
 console.print(topology_table)
+
 # =========================================================
 # Topology Statistics
 # =========================================================
-
 resource_manager_count = len(resources)
 networkx_node_count = topology.number_of_nodes()
 networkx_edge_count = topology.number_of_edges()
@@ -170,7 +167,7 @@ console.print()
 topology_stats = Table(
     title="Topology Statistics",
     show_header=True,
-    header_style="bold cyan"
+    header_style="bold cyan",
 )
 
 topology_stats.add_column("Metric")
@@ -180,28 +177,26 @@ topology_stats.add_column("Status")
 topology_stats.add_row(
     "NetworkX Nodes",
     str(networkx_node_count),
-    "[green]✓ Loaded[/green]"
+    "[green]✓ Loaded[/green]",
 )
-
 topology_stats.add_row(
     "NetworkX Edges",
     str(networkx_edge_count),
-    "[green]✓ Loaded[/green]"
+    "[green]✓ Loaded[/green]",
 )
-
 topology_stats.add_row(
     "Inventory Resources",
     str(resource_manager_count),
-    "[green]✓ Synced[/green]"
+    "[green]✓ Synced[/green]",
 )
-
 topology_stats.add_row(
     "Topology Relationships",
     str(len(topology.edges)),
-    "[green]✓ Active[/green]"
+    "[green]✓ Active[/green]",
 )
 
 console.print(topology_stats)
+
 # =========================================================
 # Resource Summary
 # =========================================================
