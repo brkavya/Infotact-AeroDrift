@@ -189,45 +189,26 @@ topology_stats.add_row(
     str(resource_manager_count),
     "[green]✓ Synced[/green]",
 )
-topology_stats.add_row(
-    "Topology Relationships",
-    str(len(topology.edges)),
-    "[green]✓ Active[/green]",
-)
-
-console.print(topology_stats)
-
-# =========================================================
-# Resource Summary
-# =========================================================
-console.print()
-summary = Table(
-    title="Resource Summary",
-    show_header=True,
-    header_style="bold cyan",
-)
-summary.add_column("Resource")
-summary.add_column("Count")
-summary.add_column("Status")
-summary.add_row("VPC", "1", "[green]✓ Active[/green]")
-summary.add_row("Subnet", "1", "[green]✓ Active[/green]")
-summary.add_row("EC2", "1", "[green]✓ Running[/green]")
-summary.add_row("Database", "1", "[green]✓ Connected[/green]")
-summary.add_row("S3 Buckets", "0", "[yellow]⚠ None[/yellow]")
-console.print(summary)
-
-
-def get_health_status(status):
-    if status == "Healthy":
+def get_health_display(health: str) -> str:
+    if health == "HEALTHY":
         return "[green]✓ Healthy[/green]"
-    elif status == "Drifted":
-        return "[red]⚠ Drifted[/red]"
-    else:
+    elif health == "WARNING":
         return "[yellow]⚠ Warning[/yellow]"
+    else:
+        return "[red]⚠ Critical[/red]"
+
+
+def get_risk_display(risk_score: float) -> str:
+    if risk_score <= 0.3:
+        return "[green]Low[/green]"
+    elif risk_score <= 0.7:
+        return "[yellow]Medium[/yellow]"
+    else:
+        return "[red]High[/red]"
 
 
 # =========================================================
-# Resource Health Status
+# Resource Health Status (Dynamic)
 # =========================================================
 console.print()
 table = Table(
@@ -236,40 +217,38 @@ table = Table(
     header_style="bold cyan",
 )
 table.add_column("Resource", style="bold")
+table.add_column("Type")
 table.add_column("Status")
 table.add_column("Health")
 
-resource_status = {
-    "Internet": ("Online", "Healthy"),
-    "VPC": ("Active", "Healthy"),
-    "Subnet": ("Active", "Healthy"),
-    "EC2": ("Running", "Drifted"),
-    "Database": ("Connected", "Healthy"),
-}
-
-for resource, (status, health) in resource_status.items():
-    table.add_row(resource, status, get_health_status(health))
+for res, record in zip(resources, health_records):
+    table.add_row(
+        record["resource_name"],
+        record["resource_type"],
+        res.get("status", "unknown").capitalize(),
+        get_health_display(record["health"]),
+    )
 
 console.print(table)
 
-# Health Summary
-healthy_count = sum(
-    1 for status in resource_status.values() if status[1] == "Healthy"
-)
-drifted_count = sum(
-    1 for status in resource_status.values() if status[1] == "Drifted"
-)
+# Dynamic Health Summary & Score
+healthy_count = sum(1 for r in health_records if r["health"] == "HEALTHY")
+warning_count = sum(1 for r in health_records if r["health"] == "WARNING")
+critical_count = sum(1 for r in health_records if r["health"] == "CRITICAL")
+total_count = len(health_records) or 1
+
+health_percentage = (healthy_count / total_count) * 100
+
 console.print(
     Panel(
         f"[green]✓ Healthy Resources: {healthy_count}[/green]\n"
-        f"[red]⚠ Drifted Resources: {drifted_count}[/red]",
+        f"[yellow]⚠ Warning Resources: {warning_count}[/yellow]\n"
+        f"[red]⚠ Critical Resources: {critical_count}[/red]",
         title="Health Summary",
         border_style="cyan",
     )
 )
 
-total_resources = len(resource_status)
-health_percentage = (healthy_count / total_resources) * 100
 console.print(
     Panel(
         f"[cyan]Health Score: {health_percentage:.0f}%[/cyan]",
@@ -278,7 +257,6 @@ console.print(
     )
 )
 
-# Health Assessment
 if health_percentage == 100:
     assessment = "[green]✓ System health is excellent[/green]"
 elif health_percentage >= 80:
@@ -291,16 +269,8 @@ else:
 console.print(Panel(assessment, title="Health Assessment", border_style="cyan"))
 
 # =========================================================
-# Resource Details
+# Resource Details & Risk Assessment (Dynamic)
 # =========================================================
-resource_details = {
-    "Internet": {"Type": "Network", "Status": "Online", "Health": "Healthy", "Risk": "Low"},
-    "VPC": {"Type": "Network", "Status": "Active", "Health": "Healthy", "Risk": "Low"},
-    "Subnet": {"Type": "Network", "Status": "Active", "Health": "Healthy", "Risk": "Low"},
-    "EC2": {"Type": "Compute", "Status": "Running", "Health": "Drifted", "Risk": "High"},
-    "Database": {"Type": "Database", "Status": "Connected", "Health": "Healthy", "Risk": "Low"},
-}
-
 console.print()
 resource_table = Table(
     title="Resource Details",
@@ -313,15 +283,13 @@ resource_table.add_column("Status")
 resource_table.add_column("Health")
 resource_table.add_column("Risk")
 
-for resource, details in resource_details.items():
-    health = "[green]✓ Healthy[/green]" if details["Health"] == "Healthy" else "[red]⚠ Drifted[/red]"
-    risk = "[red]High[/red]" if details["Risk"] == "High" else "[green]Low[/green]"
+for res, record in zip(resources, health_records):
     resource_table.add_row(
-        resource,
-        details["Type"],
-        details["Status"],
-        health,
-        risk,
+        record["resource_name"],
+        record["resource_type"],
+        res.get("status", "unknown").capitalize(),
+        get_health_display(record["health"]),
+        get_risk_display(record["risk_score"]),
     )
 console.print(resource_table)
 
@@ -380,67 +348,66 @@ console.print(
     )
 )
 
-if drifted_count == 0:
+unhealthy_records = [r for r in health_records if r["health"] != "HEALTHY"]
+
+if not unhealthy_records:
     threat_status = "[green]✓ Threat Detection: Clear[/green]"
     security_alert = "[green]✓ Security Alerts: None[/green]"
 else:
     threat_status = "[red]⚠ Threat Detection: Attention Required[/red]"
-    security_alert = "[red]⚠ Security Alerts: Resource Drift Detected[/red]"
+    security_alert = f"[red]⚠ Security Alerts: {len(unhealthy_records)} Resource Issue(s) Detected[/red]"
 
 # =========================================================
-# Resource Drift & Remediation
+# Resource Remediation Pipeline (Dynamic)
 # =========================================================
-drifted_resources = [
-    resource for resource, (status, health) in resource_status.items() if health == "Drifted"
-]
-
 recommendations = {
-    "EC2": "Review EC2 configuration and restore expected settings.",
-    "VPC": "Check VPC configuration and security rules.",
-    "Subnet": "Verify subnet configuration and routing settings.",
-    "Database": "Check database connectivity and configuration.",
-    "Internet": "Verify network connectivity and access rules.",
+    "EC2": "Review EC2 instance state and restart failed services.",
+    "RDS": "Check database connectivity, storage capacity, and connection pools.",
+    "VPC": "Review route tables, network ACLs, and gateway attachments.",
+    "Subnet": "Inspect IP allocation limits and route associations.",
 }
 
 console.print()
-if drifted_resources:
+if unhealthy_records:
     remediation_text = ""
-    for resource in drifted_resources:
-        recommendation = recommendations.get(resource, "Review resource configuration.")
+    for rec in unhealthy_records:
+        rec_type = rec["resource_type"]
+        rec_name = rec["resource_name"]
+        rec_advice = recommendations.get(rec_type, "Review resource configuration and logs.")
         remediation_text += (
-            f"[red]⚠ {resource}: Drift Detected[/red]\n"
-            f"[yellow]→ Recommendation: {recommendation}[/yellow]\n"
+            f"[red]⚠ {rec_name} ({rec_type}): State is {rec['health']}[/red]\n"
+            f"[yellow]→ Recommendation: {rec_advice}[/yellow]\n"
         )
     console.print(
         Panel(
-            remediation_text,
-            title="Drift Detection & Remediation",
+            remediation_text.strip(),
+            title="Resource Health & Remediation",
             border_style="red",
         )
     )
 else:
     console.print(
         Panel(
-            "[green]✓ No resource drift detected[/green]\n"
-            "[green]✓ All resources match expected configuration[/green]",
-            title="Drift Detection & Remediation",
+            "[green]✓ No resource degradation detected[/green]\n"
+            "[green]✓ All resources match expected operational state[/green]",
+            title="Resource Health & Remediation",
             border_style="green",
         )
     )
 
 # Dynamic Remediation Status
-drift_count = len(drifted_resources)
-if drift_count == 0:
+issue_count = len(unhealthy_records)
+if issue_count == 0:
     remediation_status = "[green]✓ No remediation required[/green]"
-    remediation_message = "[green]All resources are properly configured.[/green]"
+    remediation_message = "[green]All resources are properly configured and operational.[/green]"
     remediation_border = "green"
-elif drift_count == 1:
+elif issue_count == 1:
     remediation_status = "[yellow]⚠ Remediation Required[/yellow]"
-    remediation_message = f"[yellow]{drift_count} resource requires attention.[/yellow]"
+    remediation_message = f"[yellow]{issue_count} resource requires attention.[/yellow]"
     remediation_border = "yellow"
 else:
     remediation_status = "[red]⚠ Immediate Remediation Required[/red]"
-    remediation_message = f"[red]{drift_count} resources require attention.[/red]"
+    remediation_message = f"[red]{issue_count} resources require attention.[/red]"
     remediation_border = "red"
 
 console.print()
@@ -454,11 +421,11 @@ console.print(
 
 console.print(
     Panel(
-        "[yellow]⚠ Failed Login Attempts: 0[/yellow]\n"
+        "[green]✓ Failed Login Attempts: 0[/green]\n"
         "[green]✓ Unauthorized Access: None[/green]\n"
         f"{threat_status}\n"
         f"{security_alert}",
         title="Security Alerts",
-        border_style="yellow",
+        border_style="green" if not unhealthy_records else "yellow",
     )
 )
