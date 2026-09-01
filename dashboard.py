@@ -338,14 +338,6 @@ table.add_column("Type")
 table.add_column("Status")
 table.add_column("Health")
 
-<<<<<<< HEAD
-for res, record in zip(resources, health_records):
-    table.add_row(
-        record["resource_name"],
-        record["resource_type"],
-        res.get("status", "unknown").capitalize(),
-        get_health_display(record["health"]),
-=======
 resource_status = {
     "Internet": ("Online", "Healthy"),
     "VPC": ("Active", "Healthy"),
@@ -359,7 +351,6 @@ for resource, (status, health) in resource_status.items():
         resource,
         status,
         get_health_status(health)
->>>>>>> origin/Siri
     )
 
 console.print(table)
