@@ -71,7 +71,6 @@ manager.add_resource("Database", "RDS", "available")
 resources = manager.list_resources()
 
 health_records = []
-
 for resource in resources:
     record = checker.check_status(resource)
     health_records.append(record)
@@ -148,27 +147,12 @@ topology_table = Table(
 topology_table.add_column("Type")
 topology_table.add_column("Details")
 
-topology_table.add_row(
-    "Nodes",
-    str(topology.number_of_nodes())
-)
-
-topology_table.add_row(
-    "Edges",
-    str(topology.number_of_edges())
-)
-
-topology_table.add_row(
-    "Nodes List",
-    ", ".join(topology.nodes)
-)
-
+topology_table.add_row("Nodes", str(topology.number_of_nodes()))
+topology_table.add_row("Edges", str(topology.number_of_edges()))
+topology_table.add_row("Nodes List", ", ".join(topology.nodes))
 topology_table.add_row(
     "Edges List",
-    ", ".join(
-        f"{source} → {target}"
-        for source, target in topology.edges
-    )
+    ", ".join(f"{source} → {target}" for source, target in topology.edges),
 )
 
 console.print(topology_table)
@@ -204,16 +188,13 @@ if not missing_nodes and not missing_edges:
         "[green]✓ All required resources are present[/green]\n"
         "[green]✓ All required relationships are present[/green]"
     )
-
     topology_border = "green"
-
 else:
     topology_status = (
         "[red]⚠ Topology validation failed[/red]\n"
         f"[red]Missing Nodes: {missing_nodes}[/red]\n"
         f"[red]Missing Edges: {missing_edges}[/red]"
     )
-
     topology_border = "red"
 
 console.print(
@@ -223,8 +204,6 @@ console.print(
         border_style=topology_border,
     )
 )
-
-console.print(topology_table)
 
 
 # =========================================================
@@ -300,14 +279,16 @@ console.print(summary)
 
 
 # =========================================================
-# Health Status Function
+# Health Status Helper Functions
 # =========================================================
 
 def get_health_status(status):
     if status == "Healthy":
         return "[green]✓ Healthy[/green]"
-    elif health == "WARNING":
+    elif status == "WARNING":
         return "[yellow]⚠ Warning[/yellow]"
+    elif status == "Drifted":
+        return "[red]⚠ Drifted[/red]"
     else:
         return "[red]⚠ Critical[/red]"
 
@@ -322,7 +303,7 @@ def get_risk_display(risk_score: float) -> str:
 
 
 # =========================================================
-# Resource Health Status (Dynamic)
+# Resource Health Status
 # =========================================================
 
 console.print()
@@ -334,7 +315,6 @@ table = Table(
 )
 
 table.add_column("Resource", style="bold")
-table.add_column("Type")
 table.add_column("Status")
 table.add_column("Health")
 
@@ -350,7 +330,7 @@ for resource, (status, health) in resource_status.items():
     table.add_row(
         resource,
         status,
-        get_health_status(health)
+        get_health_status(health),
     )
 
 console.print(table)
@@ -360,42 +340,26 @@ console.print(table)
 # Health Summary
 # =========================================================
 
-healthy_count = sum(
-    1
-    for status in resource_status.values()
-    if status[1] == "Healthy"
-)
-
-drifted_count = sum(
-    1
-    for status in resource_status.values()
-    if status[1] == "Drifted"
-)
+healthy_count = sum(1 for status in resource_status.values() if status[1] == "Healthy")
+drifted_count = sum(1 for status in resource_status.values() if status[1] == "Drifted")
 
 console.print(
     Panel(
         f"[green]✓ Healthy Resources: {healthy_count}[/green]\n"
-        f"[yellow]⚠ Warning Resources: {warning_count}[/yellow]\n"
-        f"[red]⚠ Critical Resources: {critical_count}[/red]",
+        f"[red]⚠ Drifted Resources: {drifted_count}[/red]",
         title="Health Summary",
         border_style="cyan",
     )
 )
 
-<<<<<<< HEAD
-=======
 
 # =========================================================
-# Overall Health Score
+# Overall Health Score & Assessment
 # =========================================================
 
 total_resources = len(resource_status)
+health_percentage = (healthy_count / total_resources) * 100 if total_resources else 100
 
-health_percentage = (
-    healthy_count / total_resources
-) * 100
-
->>>>>>> origin/Siri
 console.print(
     Panel(
         f"[cyan]Health Score: {health_percentage:.0f}%[/cyan]",
@@ -404,7 +368,6 @@ console.print(
     )
 )
 
-<<<<<<< HEAD
 if health_percentage == 100:
     assessment = "[green]✓ System health is excellent[/green]"
 elif health_percentage >= 80:
@@ -413,32 +376,6 @@ elif health_percentage >= 60:
     assessment = "[yellow]⚠ System health needs attention[/yellow]"
 else:
     assessment = "[red]⚠ System health is critical[/red]"
-=======
->>>>>>> origin/Siri
-
-# =========================================================
-# Health Assessment
-# =========================================================
-
-if health_percentage == 100:
-    assessment = (
-        "[green]✓ System health is excellent[/green]"
-    )
-
-elif health_percentage >= 80:
-    assessment = (
-        "[yellow]⚠ System health is good with minor issues[/yellow]"
-    )
-
-elif health_percentage >= 60:
-    assessment = (
-        "[yellow]⚠ System health needs attention[/yellow]"
-    )
-
-else:
-    assessment = (
-        "[red]⚠ System health is critical[/red]"
-    )
 
 console.print(
     Panel(
@@ -450,45 +387,9 @@ console.print(
 
 
 # =========================================================
-# Resource Details & Risk Assessment (Dynamic)
+# Resource Details & Risk Assessment
 # =========================================================
-<<<<<<< HEAD
-=======
 
-resource_details = {
-    "Internet": {
-        "Type": "Network",
-        "Status": "Online",
-        "Health": "Healthy",
-        "Risk": "Low",
-    },
-    "VPC": {
-        "Type": "Network",
-        "Status": "Active",
-        "Health": "Healthy",
-        "Risk": "Low",
-    },
-    "Subnet": {
-        "Type": "Network",
-        "Status": "Active",
-        "Health": "Healthy",
-        "Risk": "Low",
-    },
-    "EC2": {
-        "Type": "Compute",
-        "Status": "Running",
-        "Health": "Drifted",
-        "Risk": "High",
-    },
-    "Database": {
-        "Type": "Database",
-        "Status": "Connected",
-        "Health": "Healthy",
-        "Risk": "Low",
-    },
-}
-
->>>>>>> origin/Siri
 console.print()
 
 resource_table = Table(
@@ -503,30 +404,31 @@ resource_table.add_column("Status")
 resource_table.add_column("Health")
 resource_table.add_column("Risk")
 
-<<<<<<< HEAD
-for res, record in zip(resources, health_records):
-=======
-for resource, details in resource_details.items():
+resource_details = {
+    "Internet": {"Type": "Network", "Status": "Online", "Health": "Healthy", "Risk": "Low"},
+    "VPC": {"Type": "Network", "Status": "Active", "Health": "Healthy", "Risk": "Low"},
+    "Subnet": {"Type": "Network", "Status": "Active", "Health": "Healthy", "Risk": "Low"},
+    "EC2": {"Type": "Compute", "Status": "Running", "Health": "Drifted", "Risk": "High"},
+    "Database": {"Type": "Database", "Status": "Connected", "Health": "Healthy", "Risk": "Low"},
+}
 
-    health = (
+for resource, details in resource_details.items():
+    health_display = (
         "[green]✓ Healthy[/green]"
         if details["Health"] == "Healthy"
         else "[red]⚠ Drifted[/red]"
     )
-
-    risk = (
+    risk_display = (
         "[red]High[/red]"
         if details["Risk"] == "High"
         else "[green]Low[/green]"
     )
-
->>>>>>> origin/Siri
     resource_table.add_row(
-        record["resource_name"],
-        record["resource_type"],
-        res.get("status", "unknown").capitalize(),
-        get_health_display(record["health"]),
-        get_risk_display(record["risk_score"]),
+        resource,
+        details["Type"],
+        details["Status"],
+        health_display,
+        risk_display,
     )
 
 console.print(resource_table)
@@ -582,10 +484,7 @@ security_checks = {
     "Encryption": True,
 }
 
-security_score = (
-    sum(security_checks.values())
-    / len(security_checks)
-) * 100
+security_score = (sum(security_checks.values()) / len(security_checks)) * 100
 
 console.print(
     Panel(
@@ -595,46 +494,17 @@ console.print(
     )
 )
 
-<<<<<<< HEAD
-unhealthy_records = [r for r in health_records if r["health"] != "HEALTHY"]
-
-if not unhealthy_records:
+if drifted_count == 0:
     threat_status = "[green]✓ Threat Detection: Clear[/green]"
     security_alert = "[green]✓ Security Alerts: None[/green]"
 else:
     threat_status = "[red]⚠ Threat Detection: Attention Required[/red]"
-    security_alert = f"[red]⚠ Security Alerts: {len(unhealthy_records)} Resource Issue(s) Detected[/red]"
-=======
+    security_alert = "[red]⚠ Security Alerts: Resource Drift Detected[/red]"
+
 
 # =========================================================
-# Threat Detection
+# Resource Remediation Pipeline
 # =========================================================
-
-if drifted_count == 0:
-    threat_status = (
-        "[green]✓ Threat Detection: Clear[/green]"
-    )
-
-    security_alert = (
-        "[green]✓ Security Alerts: None[/green]"
-    )
-
-else:
-    threat_status = (
-        "[red]⚠ Threat Detection: Attention Required[/red]"
-    )
-
-    security_alert = (
-        "[red]⚠ Security Alerts: Resource Drift Detected[/red]"
-    )
-
->>>>>>> origin/Siri
-
-# =========================================================
-# Resource Remediation Pipeline (Dynamic)
-# =========================================================
-<<<<<<< HEAD
-=======
 
 drifted_resources = [
     resource
@@ -642,67 +512,36 @@ drifted_resources = [
     if health == "Drifted"
 ]
 
->>>>>>> origin/Siri
 recommendations = {
-    "EC2": "Review EC2 instance state and restart failed services.",
+    "EC2": "Review EC2 configuration and restore expected settings.",
     "RDS": "Check database connectivity, storage capacity, and connection pools.",
     "VPC": "Review route tables, network ACLs, and gateway attachments.",
     "Subnet": "Inspect IP allocation limits and route associations.",
 }
 
 console.print()
-<<<<<<< HEAD
-if unhealthy_records:
-    remediation_text = ""
-    for rec in unhealthy_records:
-        rec_type = rec["resource_type"]
-        rec_name = rec["resource_name"]
-        rec_advice = recommendations.get(rec_type, "Review resource configuration and logs.")
-=======
 
 if drifted_resources:
-
     remediation_text = ""
-
     for resource in drifted_resources:
+        recommendation = recommendations.get(resource, "Review resource configuration.")
+        risk = resource_details.get(resource, {}).get("Risk", "Unknown")
 
-        recommendation = recommendations.get(
-            resource,
-            "Review resource configuration."
-        )
+        log_incident(resource, risk, recommendation)
 
-        # Get risk level for the incident
-        risk = resource_details.get(
-            resource,
-            {}
-        ).get(
-            "Risk",
-            "Unknown"
-        )
-
-        # Write incident to log file
-        log_incident(
-            resource,
-            risk,
-            recommendation
-        )
-
->>>>>>> origin/Siri
         remediation_text += (
-            f"[red]⚠ {rec_name} ({rec_type}): State is {rec['health']}[/red]\n"
-            f"[yellow]→ Recommendation: {rec_advice}[/yellow]\n"
+            f"[red]⚠ {resource}: Drift Detected[/red]\n"
+            f"[yellow]→ Recommendation: {recommendation}[/yellow]\n"
         )
 
     console.print(
         Panel(
             remediation_text.strip(),
-            title="Resource Health & Remediation",
+            title="Drift Detection & Remediation",
             border_style="red",
         )
     )
-
 else:
-
     console.print(
         Panel(
             "[green]✓ No resource degradation detected[/green]\n"
@@ -715,60 +554,21 @@ else:
 
 # =========================================================
 # Dynamic Remediation Status
-<<<<<<< HEAD
-issue_count = len(unhealthy_records)
-if issue_count == 0:
-    remediation_status = "[green]✓ No remediation required[/green]"
-    remediation_message = "[green]All resources are properly configured and operational.[/green]"
-    remediation_border = "green"
-elif issue_count == 1:
-    remediation_status = "[yellow]⚠ Remediation Required[/yellow]"
-    remediation_message = f"[yellow]{issue_count} resource requires attention.[/yellow]"
-=======
 # =========================================================
 
 drift_count = len(drifted_resources)
 
 if drift_count == 0:
-
-    remediation_status = (
-        "[green]✓ No remediation required[/green]"
-    )
-
-    remediation_message = (
-        "[green]All resources are properly configured.[/green]"
-    )
-
+    remediation_status = "[green]✓ No remediation required[/green]"
+    remediation_message = "[green]All resources are properly configured.[/green]"
     remediation_border = "green"
-
 elif drift_count == 1:
-
-    remediation_status = (
-        "[yellow]⚠ Remediation Required[/yellow]"
-    )
-
-    remediation_message = (
-        f"[yellow]{drift_count} resource requires attention.[/yellow]"
-    )
-
->>>>>>> origin/Siri
+    remediation_status = "[yellow]⚠ Remediation Required[/yellow]"
+    remediation_message = f"[yellow]{drift_count} resource requires attention.[/yellow]"
     remediation_border = "yellow"
-
 else:
-<<<<<<< HEAD
     remediation_status = "[red]⚠ Immediate Remediation Required[/red]"
-    remediation_message = f"[red]{issue_count} resources require attention.[/red]"
-=======
-
-    remediation_status = (
-        "[red]⚠ Immediate Remediation Required[/red]"
-    )
-
-    remediation_message = (
-        f"[red]{drift_count} resources require attention.[/red]"
-    )
-
->>>>>>> origin/Siri
+    remediation_message = f"[red]{drift_count} resources require attention.[/red]"
     remediation_border = "red"
 
 console.print()
@@ -783,7 +583,7 @@ console.print(
 
 
 # =========================================================
-# Security Alerts
+# Security Alerts Panel
 # =========================================================
 
 console.print(
@@ -793,7 +593,7 @@ console.print(
         f"{threat_status}\n"
         f"{security_alert}",
         title="Security Alerts",
-        border_style="green" if not unhealthy_records else "yellow",
+        border_style="green" if drift_count == 0 else "yellow",
     )
 )
 
@@ -803,19 +603,16 @@ console.print(
 # =========================================================
 
 if drifted_resources:
-
     console.print(
         Panel(
-            f"[green]✓ Incident report logged successfully[/green]\n"
-            f"[cyan]Log file: logs/incidents.log[/cyan]\n"
+            "[green]✓ Incident report logged successfully[/green]\n"
+            "[cyan]Log file: logs/incidents.log[/cyan]\n"
             f"[yellow]Incidents recorded: {len(drifted_resources)}[/yellow]",
             title="Incident Logging",
             border_style="green",
         )
     )
-
 else:
-
     console.print(
         Panel(
             "[green]✓ No incidents to log[/green]",
