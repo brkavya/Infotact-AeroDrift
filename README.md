@@ -45,6 +45,19 @@ The `AWSLoader` (`src/aws_loader.py`) normalizes raw AWS resources into a unifor
     { "target": "sg-web", "type": "ATTACHED_TO" }
   ]
 }
+
+---
+
+## Automated Remediation Engine
+The project includes an automated remediation engine (`src/remediation.py`) that evaluates drift states and restores baseline configurations:
+
+- **Baseline Restoration**: Restores drifted compute/database instances to operational baselines.
+- **Remediation Audit Logging**: Persists all remediation actions with timestamps to `logs/remediation.log`.
+
+## Running the Project
+- **Launch Security & Topology Dashboard**:
+  ```bash
+  python dashboard.py
 ```
 
 ### Supported Relationship Types
