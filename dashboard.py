@@ -364,15 +364,6 @@ for resource, (status, health) in resource_status.items():
 
 console.print(table)
 
-<<<<<<< HEAD
-# Dynamic Health Summary & Score
-healthy_count = sum(1 for r in health_records if r["health"] == "HEALTHY")
-warning_count = sum(1 for r in health_records if r["health"] == "WARNING")
-critical_count = sum(1 for r in health_records if r["health"] == "CRITICAL")
-total_count = len(health_records) or 1
-
-health_percentage = (healthy_count / total_count) * 100
-=======
 
 # =========================================================
 # Health Summary
@@ -389,7 +380,6 @@ drifted_count = sum(
     for status in resource_status.values()
     if status[1] == "Drifted"
 )
->>>>>>> origin/Siri
 
 console.print(
     Panel(
