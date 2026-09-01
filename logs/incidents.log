@@ -1,2 +1,3 @@
 [2026-08-31 19:40:43] Resource: EC2 | Risk: High | Recommendation: Review EC2 configuration and restore expected settings.
 [2026-08-31 20:08:38] Resource: EC2 | Risk: High | Recommendation: Review EC2 configuration and restore expected settings.
+[2026-09-01 19:45:39] Incident ID: INC-001 | Resource: EC2 | Type: Compute | Health: Drifted | Risk: High | Issue: Resource configuration drift detected | Recommendation: Review EC2 configuration and restore expected settings.
