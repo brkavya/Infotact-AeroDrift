@@ -941,6 +941,84 @@ else:
             border_style="green",
         )
     )
+# =========================================================
+# Structured Incident Report
+# =========================================================
+
+console.print()
+
+if drifted_resources:
+
+    incident_table = Table(
+        title="Incident Report",
+        show_header=True,
+        header_style="bold red",
+    )
+
+    incident_table.add_column("Incident ID")
+    incident_table.add_column("Resource")
+    incident_table.add_column("Type")
+    incident_table.add_column("Health")
+    incident_table.add_column("Risk")
+    incident_table.add_column("Issue")
+    incident_table.add_column("Recommended Action")
+
+    incident_number = 1
+
+    for resource in drifted_resources:
+
+        details = resource_details.get(
+            resource,
+            {}
+        )
+
+        resource_type = details.get(
+            "Type",
+            "Unknown"
+        )
+
+        health = details.get(
+            "Health",
+            "Unknown"
+        )
+
+        risk = details.get(
+            "Risk",
+            "Unknown"
+        )
+
+        recommendation = recommendations.get(
+            resource,
+            "Review resource configuration."
+        )
+
+        incident_id = (
+            f"INC-{incident_number:03d}"
+        )
+
+        incident_table.add_row(
+            incident_id,
+            resource,
+            resource_type,
+            health,
+            risk,
+            "Resource configuration drift detected",
+            recommendation,
+        )
+
+        incident_number += 1
+
+    console.print(incident_table)
+
+else:
+
+    console.print(
+        Panel(
+            "[green]✓ No security incidents detected[/green]",
+            title="Incident Report",
+            border_style="green",
+        )
+    )
 
 
 # =========================================================
