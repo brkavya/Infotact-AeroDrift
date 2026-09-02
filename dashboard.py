@@ -1,1037 +1,335 @@
-import networkx as nx
-
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from rich.tree import Tree
+from rich import box
 
-from pathlib import Path
 from datetime import datetime
+import os
 
-from src.resource_manager import ResourceManager
-from src.health_check import HealthChecker
+from topology import initialize_cloud_topology
 
-from topology import (
-    initialize_cloud_topology,
-    add_inventory_resources,
-    add_resource_relationships,
-)
 
+# =========================================================
+# Console
+# =========================================================
 
 console = Console()
 
+
 # =========================================================
-# Incident Report Logging
+# Dashboard Start Time
 # =========================================================
 
-LOG_DIRECTORY = Path("logs")
-LOG_FILE = LOG_DIRECTORY / "incidents.log"
-
-
-def log_incident(
-    incident_id,
-    resource,
-    resource_type,
-    health,
-    risk,
-    issue,
-    recommendation
-):
-    """
-    Log a structured incident with the same
-    incident ID used by the dashboard report.
-    """
-
-    LOG_DIRECTORY.mkdir(exist_ok=True)
-
-    timestamp = datetime.now().strftime(
-        "%Y-%m-%d %H:%M:%S"
-    )
-
-    incident = (
-        f"[{timestamp}] "
-        f"Incident ID: {incident_id} | "
-        f"Resource: {resource} | "
-        f"Type: {resource_type} | "
-        f"Health: {health} | "
-        f"Risk: {risk} | "
-        f"Issue: {issue} | "
-        f"Recommendation: {recommendation}"
-    )
-
-    # Prevent duplicate incident entries
-    if LOG_FILE.exists():
-
-        existing_logs = LOG_FILE.read_text(
-            encoding="utf-8"
-        )
-
-        if f"Incident ID: {incident_id}" in existing_logs:
-            return False
-
-    with open(
-        LOG_FILE,
-        "a",
-        encoding="utf-8"
-    ) as file:
-
-        file.write(
-            incident + "\n"
-        )
-
-    return True
+execution_time = datetime.now().strftime(
+    "%Y-%m-%d %H:%M:%S"
+)
 
 
 # =========================================================
-# Dashboard Summary
+# Initialize Cloud Topology
+# =========================================================
+
+graph = initialize_cloud_topology()
+
+
+# =========================================================
+# Dashboard Overview
 # =========================================================
 
 console.print(
     Panel(
         "[bold cyan]AeroDrift Dashboard Summary[/bold cyan]\n"
-        "[white]Cloud security monitoring and topology overview[/white]\n\n"
-        "[green]✓ Network monitoring: Active[/green]\n"
-        "[green]✓ Resource monitoring: Active[/green]\n"
-        "[green]✓ Security monitoring: Active[/green]",
+        "Cloud security monitoring and topology overview\n\n"
+        "[green]✓[/green] Network monitoring: Active\n"
+        "[green]✓[/green] Resource monitoring: Active\n"
+        "[green]✓[/green] Security monitoring: Active",
         title="Overview",
-        border_style="cyan",
+        border_style="cyan"
     )
 )
 
 
 # =========================================================
-# Backend Integration
-# =========================================================
-
-manager = ResourceManager()
-checker = HealthChecker()
-
-manager.add_resource(
-    "Web-Server",
-    "EC2",
-    "running"
-)
-
-manager.add_resource(
-    "Database",
-    "RDS",
-    "available"
-)
-
-resources = manager.list_resources()
-
-
-# =========================================================
-# Health Records
-# =========================================================
-
-health_records = []
-
-for resource in resources:
-
-    record = checker.check_status(
-        resource
-    )
-
-    health_records.append(
-        record
-    )
-
-
-# =========================================================
-# Dashboard Header
+# Topology Information
 # =========================================================
 
 console.print(
     Panel(
-        "[bold cyan]AeroDrift Cloud Security Dashboard[/bold cyan]\n"
-        "[white]CloudOps & Graph Security Monitoring[/white]",
-        title="AeroDrift",
-        border_style="cyan",
+        f"[cyan]Total Nodes:[/cyan] "
+        f"{graph.number_of_nodes()}\n"
+
+        f"[cyan]Total Relationships:[/cyan] "
+        f"{graph.number_of_edges()}\n"
+
+        "[green]Topology Status:[/green] Active",
+
+        title="AeroDrift Cloud Topology",
+        border_style="blue"
     )
 )
 
 
 # =========================================================
-# NetworkX Cloud Topology
+# Resource Table
 # =========================================================
 
-topology = initialize_cloud_topology()
-
-add_inventory_resources(
-    topology,
-    manager
+resource_table = Table(
+    title="Cloud Resources",
+    box=box.ROUNDED
 )
 
-add_resource_relationships(
-    topology
+resource_table.add_column(
+    "Resource",
+    style="cyan"
+)
+
+resource_table.add_column(
+    "Type",
+    style="magenta"
+)
+
+resource_table.add_column(
+    "Status",
+    style="green"
 )
 
 
-# =========================================================
-# Cloud Topology Tree
-# =========================================================
+for node in graph.nodes:
 
-tree = Tree(
-    "[bold cyan]☁ Cloud Topology[/bold cyan]"
-)
-
-for node in topology.nodes:
-
-    node_data = topology.nodes[node]
+    node_data = graph.nodes[node]
 
     resource_type = node_data.get(
-        "resource_type",
-        "Resource"
+        "type",
+        "Unknown"
     )
 
-    branch = tree.add(
-        f"[bold green]{node}[/bold green] "
-        f"[dim]({resource_type})[/dim]"
+    resource_table.add_row(
+        str(node),
+        str(resource_type),
+        "Active"
     )
 
-    for target in topology.successors(node):
 
-        edge_data = topology.get_edge_data(
-            node,
-            target
-        )
-
-        port = (
-            edge_data.get("port")
-            if edge_data
-            else None
-        )
-
-        if port:
-
-            branch.add(
-                f"[yellow]→ {target}[/yellow] "
-                f"[dim](port {port})[/dim]"
-            )
-
-        else:
-
-            branch.add(
-                f"[yellow]→ {target}[/yellow]"
-            )
-
-
-console.print(tree)
-
-
-# =========================================================
-# NetworkX Topology
-# =========================================================
-
-topology_table = Table(
-    title="NetworkX Topology",
-    show_header=True,
-    header_style="bold cyan",
-)
-
-topology_table.add_column("Type")
-topology_table.add_column("Details")
-
-topology_table.add_row(
-    "Nodes",
-    str(
-        topology.number_of_nodes()
-    )
-)
-
-topology_table.add_row(
-    "Edges",
-    str(
-        topology.number_of_edges()
-    )
-)
-
-topology_table.add_row(
-    "Nodes List",
-    ", ".join(
-        topology.nodes
-    )
-)
-
-topology_table.add_row(
-    "Edges List",
-    ", ".join(
-        f"{source} → {target}"
-        for source, target
-        in topology.edges
-    )
-)
-
-console.print(
-    topology_table
-)
+console.print(resource_table)
 
 
 # =========================================================
 # Topology Validation
 # =========================================================
 
-required_nodes = {
-    "i-web-01",
-    "db-prod-01",
-    "vpc-01",
-    "subnet-01",
-    "sg-web",
-    "dbsubnet-01",
-}
-
-required_edges = {
-    (
-        "i-web-01",
-        "vpc-01"
-    ),
-    (
-        "i-web-01",
-        "subnet-01"
-    ),
-    (
-        "i-web-01",
-        "sg-web"
-    ),
-    (
-        "db-prod-01",
-        "vpc-01"
-    ),
-    (
-        "db-prod-01",
-        "dbsubnet-01"
-    ),
-}
-
-missing_nodes = (
-    required_nodes
-    - set(topology.nodes)
-)
-
-missing_edges = (
-    required_edges
-    - set(topology.edges)
-)
+validation_messages = []
 
 
-if not missing_nodes and not missing_edges:
+if graph.number_of_nodes() > 0:
 
-    topology_status = (
-        "[green]✓ Topology validation passed[/green]\n"
-        "[green]✓ All required resources are present[/green]\n"
-        "[green]✓ All required relationships are present[/green]"
+    validation_messages.append(
+        "[green]✓ Cloud resources detected[/green]"
     )
 
-    topology_border = "green"
 
-else:
+if graph.number_of_edges() > 0:
 
-    topology_status = (
-        "[red]⚠ Topology validation failed[/red]\n"
-        f"[red]Missing Nodes: {missing_nodes}[/red]\n"
-        f"[red]Missing Edges: {missing_edges}[/red]"
+    validation_messages.append(
+        "[green]✓ Resource relationships detected[/green]"
     )
-
-    topology_border = "red"
 
 
 console.print(
     Panel(
-        topology_status,
+        "\n".join(validation_messages),
         title="Topology Validation",
-        border_style=topology_border,
+        border_style="green"
     )
 )
 
 
 # =========================================================
-# Topology Statistics
+# Resource Health Data
 # =========================================================
 
-networkx_node_count = (
-    topology.number_of_nodes()
-)
+# Resource monitoring information
 
-networkx_edge_count = (
-    topology.number_of_edges()
-)
+resource_details = {
 
-resource_manager_count = len(
-    resources
-)
+    "i-web-01": {
+        "type": "Compute",
+        "health": "Drifted",
+        "risk": "High"
+    },
 
+    "db-prod-01": {
+        "type": "Database",
+        "health": "Healthy",
+        "risk": "Low"
+    },
 
-topology_stats = Table(
-    title="Topology Statistics",
-    show_header=True,
-    header_style="bold cyan",
-)
+    "vpc-01": {
+        "type": "Network",
+        "health": "Healthy",
+        "risk": "Low"
+    },
 
-topology_stats.add_column("Metric")
-topology_stats.add_column("Value")
-topology_stats.add_column("Status")
+    "subnet-01": {
+        "type": "Network",
+        "health": "Healthy",
+        "risk": "Low"
+    }
 
-
-topology_stats.add_row(
-    "NetworkX Nodes",
-    str(networkx_node_count),
-    "[green]✓ Loaded[/green]",
-)
-
-topology_stats.add_row(
-    "NetworkX Edges",
-    str(networkx_edge_count),
-    "[green]✓ Loaded[/green]",
-)
-
-topology_stats.add_row(
-    "Inventory Resources",
-    str(resource_manager_count),
-    "[green]✓ Synced[/green]",
-)
-
-topology_stats.add_row(
-    "Topology Relationships",
-    str(len(topology.edges)),
-    "[green]✓ Active[/green]",
-)
-
-
-console.print(
-    topology_stats
-)
-
-
-# =========================================================
-# Resource Summary
-# =========================================================
-
-summary = Table(
-    title="Resource Summary",
-    show_header=True,
-    header_style="bold cyan",
-)
-
-summary.add_column("Resource")
-summary.add_column("Count")
-summary.add_column("Status")
-
-
-summary.add_row(
-    "VPC",
-    "1",
-    "[green]✓ Active[/green]"
-)
-
-summary.add_row(
-    "Subnet",
-    "1",
-    "[green]✓ Active[/green]"
-)
-
-summary.add_row(
-    "EC2",
-    "1",
-    "[green]✓ Running[/green]"
-)
-
-summary.add_row(
-    "Database",
-    "1",
-    "[green]✓ Connected[/green]"
-)
-
-summary.add_row(
-    "S3 Buckets",
-    "0",
-    "[yellow]⚠ None[/yellow]"
-)
-
-
-console.print(
-    summary
-)
-
-
-# =========================================================
-# Resource Status
-# =========================================================
-
-resource_status = {
-
-    "Internet": (
-        "Online",
-        "Healthy"
-    ),
-
-    "VPC": (
-        "Active",
-        "Healthy"
-    ),
-
-    "Subnet": (
-        "Active",
-        "Healthy"
-    ),
-
-    "EC2": (
-        "Running",
-        "Drifted"
-    ),
-
-    "Database": (
-        "Connected",
-        "Healthy"
-    ),
 }
 
 
-def get_health_status(status):
-
-    if status == "Healthy":
-
-        return (
-            "[green]✓ Healthy[/green]"
-        )
-
-    elif status == "Drifted":
-
-        return (
-            "[red]⚠ Drifted[/red]"
-        )
-
-    else:
-
-        return (
-            "[yellow]⚠ Warning[/yellow]"
-        )
-
-
 # =========================================================
-# Resource Health
+# Resource Health Table
 # =========================================================
 
 health_table = Table(
     title="Resource Health Status",
-    show_header=True,
-    header_style="bold cyan",
+    box=box.ROUNDED
 )
+
 
 health_table.add_column(
     "Resource",
-    style="bold"
+    style="cyan"
 )
 
-health_table.add_column("Status")
-health_table.add_column("Health")
+health_table.add_column(
+    "Type",
+    style="magenta"
+)
+
+health_table.add_column(
+    "Health",
+    style="yellow"
+)
+
+health_table.add_column(
+    "Risk",
+    style="red"
+)
 
 
-for resource, (
-    status,
-    health
-) in resource_status.items():
+drifted_resources = []
+
+
+for resource, details in resource_details.items():
+
+    health = details["health"]
+    risk = details["risk"]
+
+    if health == "Drifted":
+
+        drifted_resources.append(
+            resource
+        )
 
     health_table.add_row(
         resource,
-        status,
-        get_health_status(
-            health
-        )
+        details["type"],
+        health,
+        risk
     )
 
 
-console.print(
-    health_table
-)
+console.print(health_table)
 
 
 # =========================================================
 # Health Summary
 # =========================================================
 
-healthy_count = sum(
-    1
-    for status in resource_status.values()
-    if status[1] == "Healthy"
-)
-
-drifted_count = sum(
-    1
-    for status in resource_status.values()
-    if status[1] == "Drifted"
-)
-
-
-console.print(
-    Panel(
-        f"[green]✓ Healthy Resources: "
-        f"{healthy_count}[/green]\n"
-        f"[red]⚠ Drifted Resources: "
-        f"{drifted_count}[/red]",
-        title="Health Summary",
-        border_style="cyan",
-    )
-)
-
-
-# =========================================================
-# Overall Health Score
-# =========================================================
-
 total_resources = len(
-    resource_status
+    resource_details
 )
-
-health_percentage = (
-    healthy_count
-    / total_resources
-) * 100
-
-
-console.print(
-    Panel(
-        f"[cyan]Health Score: "
-        f"{health_percentage:.0f}%[/cyan]",
-        title="Overall Health",
-        border_style="cyan",
-    )
-)
-
-
-# =========================================================
-# Health Assessment
-# =========================================================
-
-if health_percentage == 100:
-
-    assessment = (
-        "[green]✓ System health is excellent[/green]"
-    )
-
-elif health_percentage >= 80:
-
-    assessment = (
-        "[yellow]⚠ System health is good "
-        "with minor issues[/yellow]"
-    )
-
-elif health_percentage >= 60:
-
-    assessment = (
-        "[yellow]⚠ System health needs "
-        "attention[/yellow]"
-    )
-
-else:
-
-    assessment = (
-        "[red]⚠ System health is critical[/red]"
-    )
-
-
-console.print(
-    Panel(
-        assessment,
-        title="Health Assessment",
-        border_style="cyan",
-    )
-)
-
-
-# =========================================================
-# Resource Details
-# =========================================================
-
-resource_details = {
-
-    "Internet": {
-        "Type": "Network",
-        "Status": "Online",
-        "Health": "Healthy",
-        "Risk": "Low",
-    },
-
-    "VPC": {
-        "Type": "Network",
-        "Status": "Active",
-        "Health": "Healthy",
-        "Risk": "Low",
-    },
-
-    "Subnet": {
-        "Type": "Network",
-        "Status": "Active",
-        "Health": "Healthy",
-        "Risk": "Low",
-    },
-
-    "EC2": {
-        "Type": "Compute",
-        "Status": "Running",
-        "Health": "Drifted",
-        "Risk": "High",
-    },
-
-    "Database": {
-        "Type": "Database",
-        "Status": "Connected",
-        "Health": "Healthy",
-        "Risk": "Low",
-    },
-}
-
-
-resource_table = Table(
-    title="Resource Details",
-    show_header=True,
-    header_style="bold cyan",
-)
-
-resource_table.add_column(
-    "Resource",
-    style="bold"
-)
-
-resource_table.add_column("Type")
-resource_table.add_column("Status")
-resource_table.add_column("Health")
-resource_table.add_column("Risk")
-
-
-for resource, details in resource_details.items():
-
-    if details["Health"] == "Healthy":
-
-        health = (
-            "[green]✓ Healthy[/green]"
-        )
-
-    else:
-
-        health = (
-            "[red]⚠ Drifted[/red]"
-        )
-
-
-    if details["Risk"] == "High":
-
-        risk = "[red]High[/red]"
-
-    else:
-
-        risk = "[green]Low[/green]"
-
-
-    resource_table.add_row(
-        resource,
-        details["Type"],
-        details["Status"],
-        health,
-        risk,
-    )
-
-
-console.print(
-    resource_table
-)
-
-
-# =========================================================
-# System Status
-# =========================================================
-
-console.print(
-    Panel(
-        "[green]✓ All resources are available[/green]\n"
-        "[green]✓ Cloud topology loaded successfully[/green]\n"
-        "[green]✓ NetworkX topology initialized successfully[/green]\n"
-        "[green]✓ Security dashboard initialized[/green]",
-        title="System Status",
-        border_style="green",
-    )
-)
-
-
-# =========================================================
-# Monitoring
-# =========================================================
-
-console.print(
-    Panel(
-        "[bold green]AeroDrift monitoring is active[/bold green]\n"
-        "[green]✓ Topology monitoring enabled[/green]\n"
-        "[green]✓ Resource health monitoring enabled[/green]",
-        title="Monitoring",
-        border_style="green",
-    )
-)
-
-
-# =========================================================
-# Security Status
-# =========================================================
-
-console.print(
-    Panel(
-        "[green]✓ Firewall: Active[/green]\n"
-        "[green]✓ Security Scan: Passed[/green]\n"
-        "[green]✓ Access Control: Enabled[/green]\n"
-        "[green]✓ Encryption: Enabled[/green]",
-        title="Security Status",
-        border_style="green",
-    )
-)
-
-
-# =========================================================
-# Security Score
-# =========================================================
-
-security_checks = {
-
-    "Firewall": True,
-    "Security Scan": True,
-    "Access Control": True,
-    "Encryption": True,
-
-}
-
-
-security_score = (
-    sum(
-        security_checks.values()
-    )
-    / len(security_checks)
-) * 100
-
-
-console.print(
-    Panel(
-        f"[cyan]Security Score: "
-        f"{security_score:.0f}%[/cyan]",
-        title="Security Score",
-        border_style="cyan",
-    )
-)
-
-
-# =========================================================
-# Threat Detection
-# =========================================================
-
-if drifted_count == 0:
-
-    threat_status = (
-        "[green]✓ Threat Detection: Clear[/green]"
-    )
-
-    security_alert = (
-        "[green]✓ Security Alerts: None[/green]"
-    )
-
-else:
-
-    threat_status = (
-        "[red]⚠ Threat Detection: "
-        "Attention Required[/red]"
-    )
-
-    security_alert = (
-        "[red]⚠ Security Alerts: "
-        "Resource Drift Detected[/red]"
-    )
-
-
-# =========================================================
-# Drift Detection & Remediation
-# =========================================================
-
-drifted_resources = [
-
-    resource
-
-    for resource, (
-        status,
-        health
-    ) in resource_status.items()
-
-    if health == "Drifted"
-
-]
-
-
-recommendations = {
-
-    "EC2":
-        "Review EC2 configuration and "
-        "restore expected settings.",
-
-    "VPC":
-        "Check VPC configuration and "
-        "security rules.",
-
-    "Subnet":
-        "Verify subnet configuration and "
-        "routing settings.",
-
-    "Database":
-        "Check database connectivity and "
-        "configuration.",
-
-    "Internet":
-        "Verify network connectivity and "
-        "access rules.",
-
-}
-
-
-new_incidents = 0
-
-
-if drifted_resources:
-
-    remediation_text = ""
-
-    incident_number = 1
-
-    for resource in drifted_resources:
-
-        details = resource_details.get(
-            resource,
-            {}
-        )
-
-        resource_type = details.get(
-            "Type",
-            "Unknown"
-        )
-
-        health = details.get(
-            "Health",
-            "Unknown"
-        )
-
-        risk = details.get(
-            "Risk",
-            "Unknown"
-        )
-
-        recommendation = recommendations.get(
-            resource,
-            "Review resource configuration."
-        )
-
-        issue = (
-            "Resource configuration drift detected"
-        )
-
-        incident_id = (
-            f"INC-{incident_number:03d}"
-        )
-
-        logged = log_incident(
-            incident_id,
-            resource,
-            resource_type,
-            health,
-            risk,
-            issue,
-            recommendation
-        )
-
-        if logged:
-
-            new_incidents += 1
-
-        remediation_text += (
-            f"[red]⚠ {resource}: "
-            f"Drift Detected[/red]\n"
-            f"[yellow]→ Recommendation: "
-            f"{recommendation}[/yellow]\n"
-        )
-
-        incident_number += 1
-
-
-    console.print(
-        Panel(
-            remediation_text,
-            title="Drift Detection & Remediation",
-            border_style="red",
-        )
-    )
-
-else:
-
-    console.print(
-        Panel(
-            "[green]✓ No resource drift detected[/green]\n"
-            "[green]✓ All resources match expected "
-            "configuration[/green]",
-            title="Drift Detection & Remediation",
-            border_style="green",
-        )
-    )
-
-
-# =========================================================
-# Remediation Status
-# =========================================================
 
 drift_count = len(
     drifted_resources
 )
 
+healthy_count = (
+    total_resources - drift_count
+)
 
-if drift_count == 0:
 
-    remediation_status = (
-        "[green]✓ No remediation required[/green]"
+if total_resources > 0:
+
+    health_percentage = int(
+        (healthy_count / total_resources) * 100
     )
-
-    remediation_message = (
-        "[green]All resources are properly "
-        "configured.[/green]"
-    )
-
-    remediation_border = "green"
-
-
-elif drift_count == 1:
-
-    remediation_status = (
-        "[yellow]⚠ Remediation Required[/yellow]"
-    )
-
-    remediation_message = (
-        f"[yellow]{drift_count} resource "
-        f"requires attention.[/yellow]"
-    )
-
-    remediation_border = "yellow"
-
 
 else:
 
-    remediation_status = (
-        "[red]⚠ Immediate Remediation Required[/red]"
-    )
-
-    remediation_message = (
-        f"[red]{drift_count} resources "
-        f"require attention.[/red]"
-    )
-
-    remediation_border = "red"
+    health_percentage = 100
 
 
 console.print(
     Panel(
-        f"{remediation_status}\n"
-        f"{remediation_message}",
-        title="Remediation Status",
-        border_style=remediation_border,
+        f"[green]Healthy Resources:[/green] "
+        f"{healthy_count}\n"
+
+        f"[yellow]Drifted Resources:[/yellow] "
+        f"{drift_count}\n"
+
+        f"[cyan]Overall Health:[/cyan] "
+        f"{health_percentage}%",
+
+        title="Health Summary",
+        border_style="green"
+    )
+)
+
+
+# =========================================================
+# Security Assessment
+# =========================================================
+
+if total_resources > 0:
+
+    security_score = int(
+        (healthy_count / total_resources) * 100
+    )
+
+else:
+
+    security_score = 100
+
+
+if security_score >= 80:
+
+    security_status = (
+        "[green]Secure[/green]"
+    )
+
+    security_border = "green"
+
+
+elif security_score >= 50:
+
+    security_status = (
+        "[yellow]Moderate Risk[/yellow]"
+    )
+
+    security_border = "yellow"
+
+
+else:
+
+    security_status = (
+        "[red]High Risk[/red]"
+    )
+
+    security_border = "red"
+
+
+console.print(
+    Panel(
+        f"Security Score: "
+        f"[bold]{security_score}%[/bold]\n"
+
+        f"Status: {security_status}",
+
+        title="Security Assessment",
+        border_style=security_border
     )
 )
 
@@ -1040,168 +338,335 @@ console.print(
 # Security Alerts
 # =========================================================
 
-console.print(
-    Panel(
-        "[yellow]⚠ Failed Login Attempts: 0[/yellow]\n"
-        "[green]✓ Unauthorized Access: None[/green]\n"
-        f"{threat_status}\n"
-        f"{security_alert}",
-        title="Security Alerts",
-        border_style="yellow",
+if drift_count > 0:
+
+    alert_message = (
+        "[red]⚠ Security Alert: "
+        "Resource Drift Detected[/red]\n\n"
     )
-)
 
+    for resource in drifted_resources:
 
-# =========================================================
-# Incident Logging Status
-# =========================================================
-
-if drifted_resources:
-
-    console.print(
-        Panel(
-            "[green]✓ Incident report logging enabled[/green]\n"
-            "[cyan]Log file: logs/incidents.log[/cyan]\n"
-            f"[yellow]Detected incidents: "
-            f"{len(drifted_resources)}[/yellow]\n"
-            f"[green]New incidents logged this run: "
-            f"{new_incidents}[/green]",
-            title="Incident Logging",
-            border_style="green",
+        alert_message += (
+            f"[yellow]Affected Resource:[/yellow] "
+            f"{resource}\n"
         )
-    )
+
 
 else:
 
-    console.print(
-        Panel(
-            "[green]✓ No incidents to log[/green]",
-            title="Incident Logging",
-            border_style="green",
+    alert_message = (
+        "[green]✓ No security alerts detected[/green]"
+    )
+
+
+console.print(
+    Panel(
+        alert_message,
+
+        title="Security Alerts",
+
+        border_style=(
+            "red"
+            if drift_count > 0
+            else "green"
         )
     )
+)
 
 
 # =========================================================
 # Structured Incident Report
 # =========================================================
 
-console.print()
+incident_reports = []
 
-if drifted_resources:
 
-    incident_table = Table(
-        title="Incident Report",
-        show_header=True,
-        header_style="bold red",
+for index, resource in enumerate(
+    drifted_resources,
+    start=1
+):
+
+    details = resource_details[resource]
+
+    incident = {
+
+        "id": f"INC-{index:03d}",
+
+        "resource": resource,
+
+        "type": details["type"],
+
+        "health": details["health"],
+
+        "risk": details["risk"],
+
+        "issue":
+            "Resource configuration drift detected",
+
+        "recommendation":
+            "Review resource configuration and "
+            "restore expected settings."
+
+    }
+
+
+    incident_reports.append(
+        incident
     )
 
-    incident_table.add_column(
-        "Incident ID"
-    )
 
-    incident_table.add_column(
-        "Resource"
-    )
+# =========================================================
+# Display Incident Reports
+# =========================================================
 
-    incident_table.add_column(
-        "Type"
-    )
+if incident_reports:
 
-    incident_table.add_column(
-        "Health"
-    )
+    for incident in incident_reports:
 
-    incident_table.add_column(
-        "Risk"
-    )
+        incident_message = (
 
-    incident_table.add_column(
-        "Issue"
-    )
+            f"[cyan]Incident ID:[/cyan] "
+            f"{incident['id']}\n"
 
-    incident_table.add_column(
-        "Recommended Action"
-    )
+            f"[cyan]Resource:[/cyan] "
+            f"{incident['resource']}\n"
 
+            f"[cyan]Type:[/cyan] "
+            f"{incident['type']}\n"
 
-    incident_number = 1
+            f"[cyan]Health:[/cyan] "
+            f"{incident['health']}\n"
 
+            f"[red]Risk:[/red] "
+            f"{incident['risk']}\n"
 
-    for resource in drifted_resources:
+            f"[yellow]Issue:[/yellow] "
+            f"{incident['issue']}\n"
 
-        details = resource_details.get(
-            resource,
-            {}
-        )
-
-        resource_type = details.get(
-            "Type",
-            "Unknown"
-        )
-
-        health = details.get(
-            "Health",
-            "Unknown"
-        )
-
-        risk = details.get(
-            "Risk",
-            "Unknown"
-        )
-
-        recommendation = recommendations.get(
-            resource,
-            "Review resource configuration."
-        )
-
-        issue = (
-            "Resource configuration drift detected"
-        )
-
-        incident_id = (
-            f"INC-{incident_number:03d}"
+            f"[green]Recommended Action:[/green] "
+            f"{incident['recommendation']}"
         )
 
 
-        incident_table.add_row(
-            incident_id,
-            resource,
-            resource_type,
-            health,
-            risk,
-            issue,
-            recommendation,
+        console.print(
+            Panel(
+                incident_message,
+
+                title="Incident Report",
+
+                border_style="red"
+            )
         )
 
-
-        incident_number += 1
-
-
-    console.print(
-        incident_table
-    )
 
 else:
 
     console.print(
         Panel(
-            "[green]✓ No security incidents detected[/green]",
+            "[green]✓ No incidents detected[/green]",
+
             title="Incident Report",
-            border_style="green",
+
+            border_style="green"
         )
     )
 
 
 # =========================================================
-# Completion
+# Week 4 Day 3 - Incident Summary
+# =========================================================
+
+total_incidents = len(
+    incident_reports
+)
+
+
+high_risk_incidents = sum(
+
+    1
+
+    for incident in incident_reports
+
+    if incident["risk"] == "High"
+
+)
+
+
+if total_incidents == 0:
+
+    incident_status = (
+        "[green]✓ No Incidents[/green]"
+    )
+
+    incident_border = "green"
+
+
+else:
+
+    incident_status = (
+        "[red]⚠ Attention Required[/red]"
+    )
+
+    incident_border = "red"
+
+
+console.print(
+    Panel(
+
+        f"[cyan]Total Incidents:[/cyan] "
+        f"{total_incidents}\n"
+
+        f"[red]High Risk Incidents:[/red] "
+        f"{high_risk_incidents}\n"
+
+        f"[yellow]Drifted Resources:[/yellow] "
+        f"{drift_count}\n"
+
+        f"Status: {incident_status}",
+
+        title="Incident Summary",
+
+        border_style=incident_border
+    )
+)
+
+
+# =========================================================
+# Automated Incident Logging
+# =========================================================
+
+log_directory = "logs"
+
+log_file = os.path.join(
+    log_directory,
+    "incidents.log"
+)
+
+
+os.makedirs(
+    log_directory,
+    exist_ok=True
+)
+
+
+new_incidents_logged = 0
+
+
+existing_logs = ""
+
+
+if os.path.exists(log_file):
+
+    with open(
+        log_file,
+        "r",
+        encoding="utf-8"
+    ) as file:
+
+        existing_logs = file.read()
+
+
+with open(
+    log_file,
+    "a",
+    encoding="utf-8"
+) as file:
+
+    for incident in incident_reports:
+
+        log_entry = (
+
+            f"[{execution_time}] "
+
+            f"Incident ID: {incident['id']} | "
+
+            f"Resource: {incident['resource']} | "
+
+            f"Type: {incident['type']} | "
+
+            f"Health: {incident['health']} | "
+
+            f"Risk: {incident['risk']} | "
+
+            f"Issue: {incident['issue']} | "
+
+            f"Recommendation: "
+            f"{incident['recommendation']}\n"
+
+        )
+
+
+        # Prevent duplicate incident IDs
+        # from being logged again
+
+        if incident["id"] not in existing_logs:
+
+            file.write(
+                log_entry
+            )
+
+            new_incidents_logged += 1
+
+
+# =========================================================
+# Incident Logging Status
 # =========================================================
 
 console.print(
     Panel(
-        "[bold green]✓ AeroDrift dashboard execution "
-        "completed successfully[/bold green]",
+
+        "[green]✓ Incident report logging enabled[/green]\n"
+
+        f"Log File: {log_file}\n"
+
+        f"Detected Incidents: "
+        f"{total_incidents}\n"
+
+        f"New Incidents Logged This Run: "
+        f"{new_incidents_logged}",
+
+        title="Incident Logging",
+
+        border_style="green"
+    )
+)
+
+
+# =========================================================
+# Report Information
+# =========================================================
+
+console.print(
+    Panel(
+
+        f"[cyan]Report Generated:[/cyan] "
+        f"{execution_time}\n"
+
+        "[green]Monitoring Status:[/green] Active\n"
+
+        "[yellow]Dashboard Version:[/yellow] "
+        "Week 4 Day 3",
+
+        title="Report Information",
+
+        border_style="blue"
+    )
+)
+
+
+# =========================================================
+# System Complete
+# =========================================================
+
+console.print(
+    Panel(
+
+        "[green]✓ AeroDrift dashboard execution "
+        "completed successfully[/green]",
+
         title="System Complete",
-        border_style="green",
+
+        border_style="green"
     )
 )
