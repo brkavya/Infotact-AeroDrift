@@ -55,14 +55,9 @@ console.print(
 
 console.print(
     Panel(
-        f"[cyan]Total Nodes:[/cyan] "
-        f"{graph.number_of_nodes()}\n"
-
-        f"[cyan]Total Relationships:[/cyan] "
-        f"{graph.number_of_edges()}\n"
-
+        f"[cyan]Total Nodes:[/cyan] {graph.number_of_nodes()}\n"
+        f"[cyan]Total Relationships:[/cyan] {graph.number_of_edges()}\n"
         "[green]Topology Status:[/green] Active",
-
         title="AeroDrift Cloud Topology",
         border_style="blue"
     )
@@ -78,20 +73,9 @@ resource_table = Table(
     box=box.ROUNDED
 )
 
-resource_table.add_column(
-    "Resource",
-    style="cyan"
-)
-
-resource_table.add_column(
-    "Type",
-    style="magenta"
-)
-
-resource_table.add_column(
-    "Status",
-    style="green"
-)
+resource_table.add_column("Resource", style="cyan")
+resource_table.add_column("Type", style="magenta")
+resource_table.add_column("Status", style="green")
 
 
 for node in graph.nodes:
@@ -147,8 +131,6 @@ console.print(
 # Resource Health Data
 # =========================================================
 
-# Resource monitoring information
-
 resource_details = {
 
     "i-web-01": {
@@ -187,26 +169,10 @@ health_table = Table(
     box=box.ROUNDED
 )
 
-
-health_table.add_column(
-    "Resource",
-    style="cyan"
-)
-
-health_table.add_column(
-    "Type",
-    style="magenta"
-)
-
-health_table.add_column(
-    "Health",
-    style="yellow"
-)
-
-health_table.add_column(
-    "Risk",
-    style="red"
-)
+health_table.add_column("Resource", style="cyan")
+health_table.add_column("Type", style="magenta")
+health_table.add_column("Health", style="yellow")
+health_table.add_column("Risk", style="red")
 
 
 drifted_resources = []
@@ -219,9 +185,7 @@ for resource, details in resource_details.items():
 
     if health == "Drifted":
 
-        drifted_resources.append(
-            resource
-        )
+        drifted_resources.append(resource)
 
     health_table.add_row(
         resource,
@@ -238,17 +202,11 @@ console.print(health_table)
 # Health Summary
 # =========================================================
 
-total_resources = len(
-    resource_details
-)
+total_resources = len(resource_details)
 
-drift_count = len(
-    drifted_resources
-)
+drift_count = len(drifted_resources)
 
-healthy_count = (
-    total_resources - drift_count
-)
+healthy_count = total_resources - drift_count
 
 
 if total_resources > 0:
@@ -264,15 +222,9 @@ else:
 
 console.print(
     Panel(
-        f"[green]Healthy Resources:[/green] "
-        f"{healthy_count}\n"
-
-        f"[yellow]Drifted Resources:[/yellow] "
-        f"{drift_count}\n"
-
-        f"[cyan]Overall Health:[/cyan] "
-        f"{health_percentage}%",
-
+        f"[green]Healthy Resources:[/green] {healthy_count}\n"
+        f"[yellow]Drifted Resources:[/yellow] {drift_count}\n"
+        f"[cyan]Overall Health:[/cyan] {health_percentage}%",
         title="Health Summary",
         border_style="green"
     )
@@ -296,38 +248,24 @@ else:
 
 if security_score >= 80:
 
-    security_status = (
-        "[green]Secure[/green]"
-    )
-
+    security_status = "[green]Secure[/green]"
     security_border = "green"
-
 
 elif security_score >= 50:
 
-    security_status = (
-        "[yellow]Moderate Risk[/yellow]"
-    )
-
+    security_status = "[yellow]Moderate Risk[/yellow]"
     security_border = "yellow"
-
 
 else:
 
-    security_status = (
-        "[red]High Risk[/red]"
-    )
-
+    security_status = "[red]High Risk[/red]"
     security_border = "red"
 
 
 console.print(
     Panel(
-        f"Security Score: "
-        f"[bold]{security_score}%[/bold]\n"
-
+        f"Security Score: [bold]{security_score}%[/bold]\n"
         f"Status: {security_status}",
-
         title="Security Assessment",
         border_style=security_border
     )
@@ -352,7 +290,6 @@ if drift_count > 0:
             f"{resource}\n"
         )
 
-
 else:
 
     alert_message = (
@@ -363,9 +300,7 @@ else:
 console.print(
     Panel(
         alert_message,
-
         title="Security Alerts",
-
         border_style=(
             "red"
             if drift_count > 0
@@ -410,10 +345,7 @@ for index, resource in enumerate(
 
     }
 
-
-    incident_reports.append(
-        incident
-    )
+    incident_reports.append(incident)
 
 
 # =========================================================
@@ -448,38 +380,30 @@ if incident_reports:
             f"{incident['recommendation']}"
         )
 
-
         console.print(
             Panel(
                 incident_message,
-
                 title="Incident Report",
-
                 border_style="red"
             )
         )
-
 
 else:
 
     console.print(
         Panel(
             "[green]✓ No incidents detected[/green]",
-
             title="Incident Report",
-
             border_style="green"
         )
     )
 
 
 # =========================================================
-# Week 4 Day 3 - Incident Summary
+# Incident Summary
 # =========================================================
 
-total_incidents = len(
-    incident_reports
-)
+total_incidents = len(incident_reports)
 
 
 high_risk_incidents = sum(
@@ -500,7 +424,6 @@ if total_incidents == 0:
     )
 
     incident_border = "green"
-
 
 else:
 
@@ -533,10 +456,81 @@ console.print(
 
 
 # =========================================================
+# Week 4 Day 3 Commit 2
+# Incident Severity Breakdown
+# =========================================================
+
+severity_table = Table(
+    title="Incident Severity Breakdown",
+    box=box.ROUNDED
+)
+
+
+severity_table.add_column(
+    "Severity",
+    style="cyan"
+)
+
+severity_table.add_column(
+    "Incident Count",
+    justify="center"
+)
+
+
+high_count = sum(
+    1
+    for incident in incident_reports
+    if incident["risk"] == "High"
+)
+
+
+medium_count = sum(
+    1
+    for incident in incident_reports
+    if incident["risk"] == "Medium"
+)
+
+
+low_count = sum(
+    1
+    for incident in incident_reports
+    if incident["risk"] == "Low"
+)
+
+
+severity_table.add_row(
+    "High",
+    str(high_count)
+)
+
+
+severity_table.add_row(
+    "Medium",
+    str(medium_count)
+)
+
+
+severity_table.add_row(
+    "Low",
+    str(low_count)
+)
+
+
+severity_table.add_row(
+    "Total",
+    str(total_incidents)
+)
+
+
+console.print(severity_table)
+
+
+# =========================================================
 # Automated Incident Logging
 # =========================================================
 
 log_directory = "logs"
+
 
 log_file = os.path.join(
     log_directory,
@@ -597,14 +591,9 @@ with open(
         )
 
 
-        # Prevent duplicate incident IDs
-        # from being logged again
-
         if incident["id"] not in existing_logs:
 
-            file.write(
-                log_entry
-            )
+            file.write(log_entry)
 
             new_incidents_logged += 1
 
@@ -646,7 +635,7 @@ console.print(
         "[green]Monitoring Status:[/green] Active\n"
 
         "[yellow]Dashboard Version:[/yellow] "
-        "Week 4 Day 3",
+        "Week 4 Day 3 - Commit 2",
 
         title="Report Information",
 
