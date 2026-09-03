@@ -232,6 +232,92 @@ console.print(
 
 
 # =========================================================
+# Week 4 Day 4 - Commit 1
+# Resource Statistics Dashboard
+# =========================================================
+
+compute_count = sum(
+    1
+    for details in resource_details.values()
+    if details["type"] == "Compute"
+)
+
+database_count = sum(
+    1
+    for details in resource_details.values()
+    if details["type"] == "Database"
+)
+
+network_count = sum(
+    1
+    for details in resource_details.values()
+    if details["type"] == "Network"
+)
+
+healthy_resource_count = sum(
+    1
+    for details in resource_details.values()
+    if details["health"] == "Healthy"
+)
+
+drifted_resource_count = sum(
+    1
+    for details in resource_details.values()
+    if details["health"] == "Drifted"
+)
+
+
+resource_statistics = Table(
+    title="Resource Statistics",
+    box=box.ROUNDED
+)
+
+resource_statistics.add_column(
+    "Metric",
+    style="cyan"
+)
+
+resource_statistics.add_column(
+    "Count",
+    justify="center"
+)
+
+
+resource_statistics.add_row(
+    "Total Resources",
+    str(total_resources)
+)
+
+resource_statistics.add_row(
+    "Compute Resources",
+    str(compute_count)
+)
+
+resource_statistics.add_row(
+    "Database Resources",
+    str(database_count)
+)
+
+resource_statistics.add_row(
+    "Network Resources",
+    str(network_count)
+)
+
+resource_statistics.add_row(
+    "Healthy Resources",
+    str(healthy_resource_count)
+)
+
+resource_statistics.add_row(
+    "Drifted Resources",
+    str(drifted_resource_count)
+)
+
+
+console.print(resource_statistics)
+
+
+# =========================================================
 # Security Assessment
 # =========================================================
 
@@ -407,13 +493,9 @@ total_incidents = len(incident_reports)
 
 
 high_risk_incidents = sum(
-
     1
-
     for incident in incident_reports
-
     if incident["risk"] == "High"
-
 )
 
 
@@ -456,7 +538,6 @@ console.print(
 
 
 # =========================================================
-# Week 4 Day 3 Commit 2
 # Incident Severity Breakdown
 # =========================================================
 
@@ -503,18 +584,15 @@ severity_table.add_row(
     str(high_count)
 )
 
-
 severity_table.add_row(
     "Medium",
     str(medium_count)
 )
 
-
 severity_table.add_row(
     "Low",
     str(low_count)
 )
-
 
 severity_table.add_row(
     "Total",
@@ -531,7 +609,6 @@ console.print(severity_table)
 
 log_directory = "logs"
 
-
 log_file = os.path.join(
     log_directory,
     "incidents.log"
@@ -545,7 +622,6 @@ os.makedirs(
 
 
 new_incidents_logged = 0
-
 
 existing_logs = ""
 
@@ -587,7 +663,6 @@ with open(
 
             f"Recommendation: "
             f"{incident['recommendation']}\n"
-
         )
 
 
@@ -635,7 +710,7 @@ console.print(
         "[green]Monitoring Status:[/green] Active\n"
 
         "[yellow]Dashboard Version:[/yellow] "
-        "Week 4 Day 3 - Commit 2",
+        "Week 4 Day 4 - Commit 1",
 
         title="Report Information",
 
