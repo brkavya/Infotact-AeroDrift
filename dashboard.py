@@ -20,9 +20,7 @@ console = Console()
 # Dashboard Start Time
 # =========================================================
 
-execution_time = datetime.now().strftime(
-    "%Y-%m-%d %H:%M:%S"
-)
+execution_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
 # =========================================================
@@ -65,7 +63,7 @@ console.print(
 
 
 # =========================================================
-# Resource Table
+# Cloud Resources Table
 # =========================================================
 
 resource_table = Table(
@@ -82,10 +80,7 @@ for node in graph.nodes:
 
     node_data = graph.nodes[node]
 
-    resource_type = node_data.get(
-        "type",
-        "Unknown"
-    )
+    resource_type = node_data.get("type", "Unknown")
 
     resource_table.add_row(
         str(node),
@@ -161,7 +156,7 @@ resource_details = {
 
 
 # =========================================================
-# Resource Health Table
+# Resource Health Status
 # =========================================================
 
 health_table = Table(
@@ -180,18 +175,14 @@ drifted_resources = []
 
 for resource, details in resource_details.items():
 
-    health = details["health"]
-    risk = details["risk"]
-
-    if health == "Drifted":
-
+    if details["health"] == "Drifted":
         drifted_resources.append(resource)
 
     health_table.add_row(
         resource,
         details["type"],
-        health,
-        risk
+        details["health"],
+        details["risk"]
     )
 
 
@@ -232,7 +223,6 @@ console.print(
 
 
 # =========================================================
-# Week 4 Day 4 - Commit 1
 # Resource Statistics Dashboard
 # =========================================================
 
@@ -321,15 +311,7 @@ console.print(resource_statistics)
 # Security Assessment
 # =========================================================
 
-if total_resources > 0:
-
-    security_score = int(
-        (healthy_count / total_resources) * 100
-    )
-
-else:
-
-    security_score = 100
+security_score = health_percentage
 
 
 if security_score >= 80:
@@ -387,17 +369,13 @@ console.print(
     Panel(
         alert_message,
         title="Security Alerts",
-        border_style=(
-            "red"
-            if drift_count > 0
-            else "green"
-        )
+        border_style="red" if drift_count > 0 else "green"
     )
 )
 
 
 # =========================================================
-# Structured Incident Report
+# Structured Incident Reports
 # =========================================================
 
 incident_reports = []
@@ -422,8 +400,7 @@ for index, resource in enumerate(
 
         "risk": details["risk"],
 
-        "issue":
-            "Resource configuration drift detected",
+        "issue": "Resource configuration drift detected",
 
         "recommendation":
             "Review resource configuration and "
@@ -491,7 +468,6 @@ else:
 
 total_incidents = len(incident_reports)
 
-
 high_risk_incidents = sum(
     1
     for incident in incident_reports
@@ -501,37 +477,22 @@ high_risk_incidents = sum(
 
 if total_incidents == 0:
 
-    incident_status = (
-        "[green]✓ No Incidents[/green]"
-    )
-
+    incident_status = "[green]✓ No Incidents[/green]"
     incident_border = "green"
 
 else:
 
-    incident_status = (
-        "[red]⚠ Attention Required[/red]"
-    )
-
+    incident_status = "[red]⚠ Attention Required[/red]"
     incident_border = "red"
 
 
 console.print(
     Panel(
-
-        f"[cyan]Total Incidents:[/cyan] "
-        f"{total_incidents}\n"
-
-        f"[red]High Risk Incidents:[/red] "
-        f"{high_risk_incidents}\n"
-
-        f"[yellow]Drifted Resources:[/yellow] "
-        f"{drift_count}\n"
-
+        f"[cyan]Total Incidents:[/cyan] {total_incidents}\n"
+        f"[red]High Risk Incidents:[/red] {high_risk_incidents}\n"
+        f"[yellow]Drifted Resources:[/yellow] {drift_count}\n"
         f"Status: {incident_status}",
-
         title="Incident Summary",
-
         border_style=incident_border
     )
 )
@@ -545,7 +506,6 @@ severity_table = Table(
     title="Incident Severity Breakdown",
     box=box.ROUNDED
 )
-
 
 severity_table.add_column(
     "Severity",
@@ -564,13 +524,11 @@ high_count = sum(
     if incident["risk"] == "High"
 )
 
-
 medium_count = sum(
     1
     for incident in incident_reports
     if incident["risk"] == "Medium"
 )
-
 
 low_count = sum(
     1
@@ -601,6 +559,42 @@ severity_table.add_row(
 
 
 console.print(severity_table)
+
+
+# =========================================================
+# Final System Status Summary
+# =========================================================
+
+if total_incidents == 0 and security_score >= 80:
+
+    final_system_status = "[green]✓ System Secure[/green]"
+    final_border = "green"
+
+elif security_score >= 50:
+
+    final_system_status = "[yellow]⚠ Monitoring Required[/yellow]"
+    final_border = "yellow"
+
+else:
+
+    final_system_status = "[red]⚠ Attention Required[/red]"
+    final_border = "red"
+
+
+console.print(
+    Panel(
+        f"[cyan]Topology Status:[/cyan] Active\n"
+        f"[green]Health Score:[/green] {health_percentage}%\n"
+        f"[yellow]Security Score:[/yellow] {security_score}%\n"
+        f"[red]Total Incidents:[/red] {total_incidents}\n"
+        f"[bold]Overall System Status:[/bold] "
+        f"{final_system_status}",
+
+        title="Final System Status",
+
+        border_style=final_border
+    )
+)
 
 
 # =========================================================
@@ -646,25 +640,16 @@ with open(
     for incident in incident_reports:
 
         log_entry = (
-
             f"[{execution_time}] "
-
             f"Incident ID: {incident['id']} | "
-
             f"Resource: {incident['resource']} | "
-
             f"Type: {incident['type']} | "
-
             f"Health: {incident['health']} | "
-
             f"Risk: {incident['risk']} | "
-
             f"Issue: {incident['issue']} | "
-
             f"Recommendation: "
             f"{incident['recommendation']}\n"
         )
-
 
         if incident["id"] not in existing_logs:
 
@@ -679,14 +664,9 @@ with open(
 
 console.print(
     Panel(
-
         "[green]✓ Incident report logging enabled[/green]\n"
-
         f"Log File: {log_file}\n"
-
-        f"Detected Incidents: "
-        f"{total_incidents}\n"
-
+        f"Detected Incidents: {total_incidents}\n"
         f"New Incidents Logged This Run: "
         f"{new_incidents_logged}",
 
@@ -696,21 +676,14 @@ console.print(
     )
 )
 
-
 # =========================================================
 # Report Information
 # =========================================================
 
 console.print(
     Panel(
-
-        f"[cyan]Report Generated:[/cyan] "
-        f"{execution_time}\n"
-
-        "[green]Monitoring Status:[/green] Active\n"
-
-        "[yellow]Dashboard Version:[/yellow] "
-        "Week 4 Day 4 - Commit 1",
+        f"[cyan]Report Generated:[/cyan] {execution_time}\n"
+        "[green]Monitoring Status:[/green] Active",
 
         title="Report Information",
 
@@ -725,7 +698,6 @@ console.print(
 
 console.print(
     Panel(
-
         "[green]✓ AeroDrift dashboard execution "
         "completed successfully[/green]",
 
