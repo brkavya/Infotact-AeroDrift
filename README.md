@@ -1,3 +1,4 @@
+[![AeroDrift CI](https://github.com/brkavya/Infotact-AeroDrift/actions/workflows/ci.yml/badge.svg)](https://github.com/brkavya/Infotact-AeroDrift/actions/workflows/ci.yml)
 # Infotact-AeroDrift
 Infotact Python Internship Project
 # AeroDrift
