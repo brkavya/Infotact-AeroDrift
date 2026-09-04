@@ -23,15 +23,26 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install pytest rich networkx boto3
+
+      - name: Create logs directory
+        run: |
+          mkdir -p logs
 
       - name: Run Test Suite
+        env:
+          PYTHONPATH: .
         run: |
-          pytest -v
+          python -m pytest -v
 
       - name: Verify Topology Engine
+        env:
+          PYTHONPATH: .
         run: |
           python topology.py
 
       - name: Verify Remediation Engine
+        env:
+          PYTHONPATH: .
         run: |
           python remediation.py
